@@ -1,0 +1,80 @@
+selector:
+  buffer-size: 100
+
+crawler:
+  number-of-workers: 5
+  max-retry-attempts: 10
+  timeout: 5
+  temp-stop-time: 60
+
+parser:
+  number-of-workers: 100
+
+database:
+  number-of-workers: 100
+
+websites:
+  novi-list:
+    url-template: "https://www.novilist.hr/?p=%d"
+    start-index: 46100
+    end-index: 46100
+
+  24-sata:
+    url-template: "https://www.24sata.hr/a-%d"
+    start-index: 740696
+    end-index: 740696
+
+  direktno:
+    url-template: "https://direktno.hr/direkt/e-%d/"
+    start-index: 226522
+    end-index: 226522
+
+  dnevno:
+    url-template: "https://www.dnevno.hr/?p=%d"
+    start-index: 1694432
+    end-index: 1694432
+
+  hrt:
+    url-template: "https://vijesti.hrt.hr/%d/s"
+    start-index: 1084437
+    end-index: 1084437
+
+  indexhr:
+    url-template: "https://www.index.hr/clanak.aspx?id=%d"
+    start-index: 2260710
+    end-index: 2260710
+
+  jutranji:
+    url-template: "https://www.jutarnji.hr/%d/"
+    start-index: 15057737
+    end-index: 15057737
+
+  rtl:
+    url-template: "https://www.rtl.hr/vijesti-hr/novosti/zanimljivosti/%d/s/"
+    start-index: 3997186
+    end-index: 3997186
+
+  slobodna-dalmacija:
+    url-template: "https://slobodnadalmacija.hr/novosti/hrvatska/clanak/id/%d/"
+    start-index: 1083941
+    end-index: 1083941
+
+  telegram:
+    url-template: "https://www.telegram.hr/?p=%d"
+    start-index: 103961
+    end-index: 103961
+
+  vecernji:
+    url-template: "https://www.vecernji.hr/s/s-%d"
+    start-index: 1476317
+    end-index: 1476317
+
+  hotspot:
+    url-template: "http://hotspots.net.hr/?p=%d"
+    start-index: 44252
+    end-index: 44252
+
+  nethr:
+    url-template: "http://net.hr/?p=%d"
+    start-index: 22222
+    end-index: 22222

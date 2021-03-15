@@ -1,0 +1,314 @@
+website:
+  novi-list:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "article-title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "user-content"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "h1", "h2", "h3", "h4", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "p"
+      condition:
+        attribute: "class"
+        value: "article-date"
+
+  24-sata:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "article__title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "article__text"
+      filter: ["br", "blockquote", "script", "iframe", "span", "a", "div", "em", "style"]
+    publish_date:
+      tag: "time"
+      condition:
+        attribute: "class"
+        value: "article__time"
+      extract: "datetime"
+
+  direktno:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "pd-title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "main-content"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "h1", "h2", "h3", "h4", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "time"
+      condition:
+        attribute: "class"
+        value: "article:published_time"
+      extract: "content"
+
+  dnevno:
+    title:
+      tag: "h1"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "section"
+      condition:
+        attribute: "class"
+        value: "description"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "h1", "h2", "h3", "h4", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "time"
+      condition:
+        attribute: "class"
+        value: "article:published_time"
+      extract: "content"
+
+  hrt:
+    title:
+      tag: "h1"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "w-full xl:w-7/12 px-0.2 xl:px-4 text-lg a-body"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "h1", "h2", "h3", "h4", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "meta"
+      condition:
+        attribute: "name"
+        value: "pubdate"
+      extract: "content"
+
+  indexhr:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "vijesti-text-parsed title"
+    url:
+      tag: "link"
+      condition:
+        attribute: "rel"
+        value: "og:url"
+      extract: "href"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "text vijesti-link-underline"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "time"
+      extract: "datetime"
+
+  jutranji:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "item__title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "itemFullText"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "article:published_time"
+      extract: "content"
+
+  rtl:
+    title:
+      tag: "h1"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "Article-meteredContent"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "time"
+      extract: "datetime"
+
+  slobodna-dalmacija:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "item__title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "itemFullText"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "article:published_time"
+      extract: "content"
+
+  telegram:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "full"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "full relative"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "h1", "strong", "blockquote", "iframe", "span", "em", "video"]
+
+  vecernji:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "article__title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "article__body--main_content"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video"]
+    publish_date:
+      tag: "span"
+      condition:
+        attribute: "class"
+        value: "article__header_date"
+
+  hotspot:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "post-title"
+    url:
+      tag: "link"
+      condition:
+        attribute: "rel"
+        value: "shortlink"
+      extract: "href"
+    article:
+      tag: "article"
+      condition:
+        attribute: "class"
+        value: "the-post"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video", "figure"]
+    publish_date:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "article:published_time"
+      extract: "content"
+
+  nethr:
+    title:
+      tag: "h1"
+      condition:
+        attribute: "class"
+        value: "title"
+    url:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "og:url"
+      extract: "content"
+    article:
+      tag: "div"
+      condition:
+        attribute: "class"
+        value: "article-content"
+      filter: ["div", "br", "script", "style", "i", "a", "img", "noscript", "font",
+               "b", "strong", "blockquote", "iframe", "span", "em", "video", "figure"]
+    publish_date:
+      tag: "meta"
+      condition:
+        attribute: "property"
+        value: "article:published_time"
+      extract: "content"
