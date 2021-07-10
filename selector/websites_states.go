@@ -6,7 +6,7 @@ type websitesStates struct {
 }
 
 func websiteStateFromSettings() *websitesStates {
-	return &websitesStates{
+	return &websitesStates {
 		idOfLastUsedWebsite: 0,
 		states:              getWebsitesStates(),
 	}
