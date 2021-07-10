@@ -1,4 +1,4 @@
-package data_storing
+package data_store
 
 import "lacon-go-tiny-scrapy/utils"
 

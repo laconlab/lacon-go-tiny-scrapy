@@ -1,24 +1,25 @@
-package data_storing
+package data_store
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"lacon-go-tiny-scrapy/logger"
 	"lacon-go-tiny-scrapy/parser"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-	host string
-	username string
-	password string
-	databaseName string
+	host            string
+	username        string
+	password        string
+	databaseName    string
 	numberOfWorkers int
 
 	workersGauge = promauto.NewGauge(prometheus.GaugeOpts{
@@ -90,7 +91,7 @@ func startInsertingInDatabase(wg *sync.WaitGroup, inputData <-chan parser.Parsed
 	defer db.Close()
 	for content := range inputData {
 		startTime := time.Now().UnixNano()
-		insert(db,content)
+		insert(db, content)
 		endTime := time.Now().UnixNano()
 		databaseSummary.Observe(float64(endTime - startTime))
 	}
