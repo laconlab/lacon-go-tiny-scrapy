@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-    "lacon-go-tiny-scrapy/selector"
+    "github.com/laconlab/lacon-go-tiny-scrapy/src/selector"
 )
 
 
