@@ -1,5 +1,5 @@
 package data_store
-
+/*
 import (
 	"database/sql"
 	"fmt"
@@ -140,3 +140,4 @@ func createNQuestionMarks(n int) string {
 	q := strings.Repeat("?,", n)
 	return q[:len(q)-1]
 }
+*/

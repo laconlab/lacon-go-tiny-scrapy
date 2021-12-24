@@ -42,18 +42,18 @@ var (
 		Name: "crawler_worker_summary",
 		Help: "Performances per worker",
 	},
-	[]string{
-		"website",
-		"status",
-	})
+		[]string{
+			"website",
+			"status",
+		})
 
 	responseCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "successful_download_count",
 		Help: "Number of successful downloads",
 	},
-	[]string{
-		"website",
-	})
+		[]string{
+			"website",
+		})
 )
 
 func init() {
@@ -63,49 +63,43 @@ func init() {
 	poolSize = config.getWorkerPoolSize()
 	tempStopTime = config.getTempStopTime()
 
-
-	logger.INFO.Printf("Downloading with poolSize: %d, timeout: %v, " +
+	logger.INFO.Printf("Downloading with poolSize: %d, timeout: %v, "+
 		"retryCount: %d, tempLock %v\n", poolSize, timeout, maxRetryCount, tempStopTime)
 }
 
+func NewHTMLProducer(wg *sync.WaitGroup, reqs <-chan selector.HTTPRequest) <-chan HTMLPage {
+	wg.Add(1)
+	output := make(chan HTMLPage, 100)
 
-func NewHTMLProducer(waitingGroup *sync.WaitGroup, inputRequests <- chan selector.HTTPRequest) <- chan HTMLPage {
-	waitingGroup.Add(1)
-	outputHtml := newHTMLOutputChannel()
+	iwg := sync.WaitGroup{}
 
-	innerWaitingGroup := sync.WaitGroup{}
-
-	innerWaitingGroup.Add(poolSize)
+	iwg.Add(poolSize)
 	logger.INFO.Printf("Starting %d download workers\n", poolSize)
 	workersGauge.Set(float64(poolSize))
+
 	for i := 0; i < poolSize; i++ {
-		go startDownloadWorker(&innerWaitingGroup, inputRequests, outputHtml)
+		go downloadJob(&iwg, reqs, output)
 	}
 
-	go closeOutput(&innerWaitingGroup, waitingGroup, outputHtml)
+	go finish(&iwg, wg, output)
 
-	return outputHtml
+	return output
 }
 
-func newHTMLOutputChannel() chan HTMLPage {
-	return make(chan HTMLPage)
-}
-
-func startDownloadWorker(waitingGroup *sync.WaitGroup, input <- chan selector.HTTPRequest, output chan <- HTMLPage) {
-	for req := range input {
-		startTime := time.Now().UnixNano()
-		response := downloadWithRetry(req.GetURL())
+func downloadJob(wg *sync.WaitGroup, reqs <-chan selector.HTTPRequest, output chan<- HTMLPage) {
+	for req := range reqs {
+		start := time.Now().UnixNano()
+		response := downloadWithRetry(req.Url)
 
 		if response.isSuccess() {
-			responseCounter.WithLabelValues(req.GetWebsite()).Inc()
-			output <- NewHTMLPage(response, req.GetId(), req.GetWebsite())
+			output <- NewHTMLPage(response, req.Id, req.Website)
 		}
 
-		endTime := time.Now().UnixNano()
-		downloadSummary.WithLabelValues(req.GetWebsite(), strconv.Itoa(int(response.status))).Observe(float64(endTime - startTime))
+		end := time.Now().UnixNano()
+		downloadSummary.WithLabelValues(req.Website, strconv.Itoa(int(response.status))).Observe(float64(end - start))
 	}
 	workersGauge.Dec()
-	waitingGroup.Done()
+	wg.Done()
 }
 
 func downloadWithRetry(url string) httpResponse {
@@ -134,7 +128,7 @@ func download(url string) httpResponse {
 	go asyncDownload(url, ctx, callback)
 
 	select {
-	case ret := <- callback:
+	case ret := <-callback:
 		return ret
 	case <-time.After(timeout):
 		logger.WARNING.Printf("Timeout on url: %s\n", url)
@@ -158,11 +152,11 @@ func asyncDownload(url string, ctx context.Context, callback chan httpResponse) 
 	}
 }
 
-func closeOutput(innerWaitingGroup *sync.WaitGroup, waitingGroup *sync.WaitGroup, outputChannel chan HTMLPage) {
+func finish(iwg, wg *sync.WaitGroup, output chan HTMLPage) {
 	logger.INFO.Println("Waiting to download all pages...")
-	innerWaitingGroup.Wait()
+	iwg.Wait()
 	logger.INFO.Println("Download completed, closing the channel")
-	close(outputChannel)
+	close(output)
 	logger.INFO.Println("Download completed, channel closed")
-	waitingGroup.Done()
+	wg.Done()
 }

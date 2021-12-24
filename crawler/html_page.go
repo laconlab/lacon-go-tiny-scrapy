@@ -1,7 +1,7 @@
 package crawler
 
 type HTMLPage struct {
-	id 		int
+	id		int
 	website string
 	content []byte
 }
