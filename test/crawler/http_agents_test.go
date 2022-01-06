@@ -39,3 +39,6 @@ func TestHttpAgentYaml(t *testing.T) {
         t.Error("Failed Test1")
     }
 }
+
+func TestHttpAgentSelecting(t *testing.T) {
+}

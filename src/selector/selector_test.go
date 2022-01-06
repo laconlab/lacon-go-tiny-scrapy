@@ -2,7 +2,6 @@ package selector
 
 import (
 	"testing"
-	"github.com/laconlab/lacon-go-tiny-scrapy/src/selector"
     "fmt"
 )
 
@@ -14,7 +13,7 @@ func TestOneStateWebsite(t *testing.T) {
             start-index: 0
             end-index: 5
     `
-    reqs := selector.NewSelector(config)
+    reqs := NewSelector(config)
 
     for i := 0; i < 6; i++ {
         req := <-reqs
@@ -38,7 +37,7 @@ func TestRoundRobin(t *testing.T) {
             start-index: 10
             end-index: 12
     `
-    reqs := selector.NewSelector(config)
+    reqs := NewSelector(config)
 
     req := <-reqs
     if req.Id != 0 || req.Url != "example1-0" || req.Name != "test-example-1" {
