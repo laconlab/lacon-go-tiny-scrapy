@@ -1,7 +1,8 @@
 package crawler
 
-import "fmt"
+//import "fmt"
 
+/*
 
 func NewFilter(reqs chan downloadRequest) chan downloadRequest {
     output := make(chan downloadRequest)
@@ -19,3 +20,4 @@ func filter(reqs chan downloadRequest, output chan downloadRequest) {
         fmt.Print(url)
     }
 }
+*/
