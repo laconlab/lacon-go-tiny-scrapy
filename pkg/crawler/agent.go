@@ -1,26 +1,39 @@
+// round robin agent list
 package crawler
 
-import "net/http"
+import (
+	"io/ioutil"
+	"log"
+	"sync"
+
+	"gopkg.in/yaml.v2"
+)
 
 type HttpAgents struct {
 	id     int
 	Agents []string `yaml:"User-Agents"`
+	mu     sync.Mutex
 }
 
-func (a *HttpAgents) Next() string {
+func newHttpAgents(filePath string) *HttpAgents {
+	cfg, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	agents := &HttpAgents{}
+	if err := yaml.Unmarshal(cfg, &agents); err != nil {
+		log.Fatal(err)
+	}
+
+	return agents
+}
+
+func (a *HttpAgents) next() string {
+	a.mu.Lock()
+	defer a.mu.Unlock() // overkill
+
 	ret := a.Agents[a.id]
 	a.id = (a.id + 1) % len(a.Agents)
 	return ret
-}
-
-func AgentHttpRequest(url, agent string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", agent)
-
-	client := &http.Client{}
-	return client.Do(req)
 }
