@@ -26,6 +26,10 @@ func newHttpAgents(filePath string) *HttpAgents {
 		log.Fatal(err)
 	}
 
+	if len(agents.Agents) == 0 {
+		log.Fatal("Zero agents not allowed")
+	}
+
 	return agents
 }
 
