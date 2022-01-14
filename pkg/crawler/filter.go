@@ -3,6 +3,7 @@ package crawler
 import (
 	"log"
 	"net/http"
+	"time"
 )
 
 type agents interface {
@@ -10,12 +11,14 @@ type agents interface {
 }
 
 type headerFilter struct {
-	ags agents
+	ags     agents
+	timeout time.Duration
 }
 
-func newHeaderFilter(ags agents) *headerFilter {
+func newHeaderFilter(ags agents, timeout time.Duration) *headerFilter {
 	return &headerFilter{
-		ags: ags,
+		ags:     ags,
+		timeout: timeout,
 	}
 }
 
@@ -27,11 +30,13 @@ func (h *headerFilter) getAgent() string {
 // or if http status is not between [300, 500)
 // otherwise false
 func (h *headerFilter) filter(url string) bool {
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: h.timeout,
+	}
 
-	req, err := http.NewRequest("HEAD", url, nil)
+	req, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 		return true
 	}
 
@@ -39,7 +44,7 @@ func (h *headerFilter) filter(url string) bool {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 		return true
 	}
 
