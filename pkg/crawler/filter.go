@@ -1,23 +1,47 @@
 package crawler
 
-//import "fmt"
+import (
+	"log"
+	"net/http"
+)
 
-/*
-
-func NewFilter(reqs chan downloadRequest) chan downloadRequest {
-    output := make(chan downloadRequest)
-
-    for i := 0; i < 10; i++ {
-        go filter(reqs, output)
-    }
-
-    return output
+type agents interface {
+	next() string
 }
 
-func filter(reqs chan downloadRequest, output chan downloadRequest) {
-    for req := range reqs {
-        url := req.getUrl()
-        fmt.Print(url)
-    }
+type headerFilter struct {
+	ags agents
 }
-*/
+
+func newHeaderFilter(ags agents) *headerFilter {
+	return &headerFilter{
+		ags: ags,
+	}
+}
+
+func (h *headerFilter) getAgent() string {
+	return h.ags.next()
+}
+
+// return true if client does not support header download
+// or if http status is not between [300, 500)
+// otherwise false
+func (h *headerFilter) filter(url string) bool {
+	client := &http.Client{}
+
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		log.Fatalln(err)
+		return true
+	}
+
+	req.Header.Set("User-Agent", h.getAgent())
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+		return true
+	}
+
+	return !(resp.StatusCode >= 300 && resp.StatusCode < 500)
+}
