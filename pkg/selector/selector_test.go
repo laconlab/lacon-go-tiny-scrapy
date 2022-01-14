@@ -82,14 +82,14 @@ func TestRoundRobin(t *testing.T) {
 	cfg := `
     websites:
     -   name: "test-example-1"
-    url-template: "example1-%d"
-    start-index: 0
-    end-index: 2
+        url-template: "example1-%d"
+        start-index: 0
+        end-index: 2
 
     -   name: "test-example-2"
-    url-template: "example2-%d"
-    start-index: 10
-    end-index: 11
+        url-template: "example2-%d"
+        start-index: 10
+        end-index: 11
     `
 	ioutil.WriteFile(f.Name(), []byte(cfg), 0644)
 
