@@ -26,7 +26,7 @@ func (h *headerFilter) getAgent() string {
 	return h.ags.next()
 }
 
-// return true if client does not support header download
+// return true if there is an error (timeout included)
 // or if http status is not between [300, 500)
 // otherwise false
 func (h *headerFilter) filter(url string) bool {
