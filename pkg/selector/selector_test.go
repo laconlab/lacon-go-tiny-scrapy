@@ -25,7 +25,7 @@ func TestOneStateWebsite(t *testing.T) {
 
 	i := 0
 	for req := range NewHttpReqChan(sites) {
-		exp := &HttpRequest{
+		exp := HttpRequest{
 			id:   i,
 			name: "test-example-1",
 			url:  fmt.Sprintf("example1-%d", i),
@@ -60,7 +60,7 @@ func TestRoundRobin(t *testing.T) {
 	reqs := NewHttpReqChan(sites)
 
 	req := <-reqs
-	exp := &HttpRequest{
+	exp := HttpRequest{
 		id:   0,
 		name: "test-example-1",
 		url:  "example1-0",
@@ -71,7 +71,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = &HttpRequest{
+	exp = HttpRequest{
 		id:   10,
 		name: "test-example-2",
 		url:  "example2-10",
@@ -82,7 +82,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = &HttpRequest{
+	exp = HttpRequest{
 		id:   1,
 		name: "test-example-1",
 		url:  "example1-1",
@@ -93,7 +93,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = &HttpRequest{
+	exp = HttpRequest{
 		id:   11,
 		name: "test-example-2",
 		url:  "example2-11",
@@ -104,7 +104,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = &HttpRequest{
+	exp = HttpRequest{
 		id:   2,
 		name: "test-example-1",
 		url:  "example1-2",

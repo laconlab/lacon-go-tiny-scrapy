@@ -1,6 +1,8 @@
 package selector
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Websites struct {
 	Sites []*Website `yaml:"websites"`
@@ -51,10 +53,10 @@ func (r HttpRequest) GetUrl() string {
 	return r.url
 }
 
-func NewHttpReqChan(websites Websites) <-chan *HttpRequest {
-	ch := make(chan *HttpRequest, 1)
+func NewHttpReqChan(websites Websites) <-chan HttpRequest {
+	ch := make(chan HttpRequest, 1)
 
-	go func(ch chan<- *HttpRequest, sites []*Website) {
+	go func(ch chan<- HttpRequest, sites []*Website) {
 		defer close(ch)
 
 		done := 0
@@ -65,7 +67,7 @@ func NewHttpReqChan(websites Websites) <-chan *HttpRequest {
 					continue
 				}
 
-				ch <- &HttpRequest{
+				ch <- HttpRequest{
 					id:   site.getId(),
 					name: site.getName(),
 					url:  site.getUrl(),
