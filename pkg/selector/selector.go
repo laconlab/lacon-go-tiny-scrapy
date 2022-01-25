@@ -1,92 +1,80 @@
 package selector
 
-import (
-	"fmt"
-	"io/ioutil"
-	"log"
-	"sync"
+import "fmt"
 
-	"gopkg.in/yaml.v2"
-)
-
-type States struct {
-	States []*State `yaml:"websites"`
-	mu     sync.Mutex
-	id     int
+type Websites struct {
+	Sites []*Website `yaml:"websites"`
 }
 
-func New(filePath string) *States {
-	cfg, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ss := &States{}
-	if err := yaml.Unmarshal(cfg, &ss); err != nil {
-		log.Fatal(err)
-	}
-
-	return ss
-}
-
-func (s *States) Next() *HttpRequest {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-
-	doneCount := 0
-	for doneCount < len(s.States) {
-		req := s.States[s.id].next()
-		s.id = (s.id + 1) % len(s.States)
-		if req == nil {
-			doneCount++
-		} else {
-			return req
-		}
-	}
-
-	return nil
-}
-
-type State struct {
+type Website struct {
 	Name        string `yaml:"name"`
 	UrlTemplate string `yaml:"url-template"`
-	StartId     int `yaml:"start-index"`
-	EndId       int `yaml:"end-index"`
-}
-
-func (s *State) isDone() bool {
-	return s.StartId > s.EndId
-}
-
-func (s *State) next() *HttpRequest {
-	if s.isDone() {
-		return nil
-	}
-
-	id := s.StartId
-	s.StartId++
-	req := &HttpRequest{
-		Id:   id,
-		Name: s.Name,
-		Url:  fmt.Sprintf(s.UrlTemplate, id),
-	}
-	return req
+	StartId     int    `yaml:"start-index"`
+	EndId       int    `yaml:"end-index"`
 }
 
 type HttpRequest struct {
-	Id   int
-	Name string
-	Url  string
+	id   int
+	name string
+	url  string
+}
+
+func (w *Website) getId() int {
+	return w.StartId
+}
+
+func (w *Website) getName() string {
+	return w.Name
+}
+
+func (w *Website) getUrl() string {
+	return fmt.Sprintf(w.UrlTemplate, w.getId())
+}
+
+func (w *Website) isDone() bool {
+	return w.StartId > w.EndId
+}
+
+func (w *Website) inc() {
+	w.StartId++
 }
 
 func (r HttpRequest) GetId() int {
-	return r.Id
+	return r.id
 }
 
 func (r HttpRequest) GetName() string {
-	return r.Name
+	return r.name
 }
 
 func (r HttpRequest) GetUrl() string {
-	return r.Url
+	return r.url
+}
+
+func NewHttpReqChan(websites Websites) <-chan *HttpRequest {
+	ch := make(chan *HttpRequest, 1)
+
+	go func(ch chan<- *HttpRequest, sites []*Website) {
+		defer close(ch)
+
+		done := 0
+		for done != len(sites) {
+			for _, site := range sites {
+				if site.isDone() {
+					done++
+					continue
+				}
+
+				ch <- &HttpRequest{
+					id:   site.getId(),
+					name: site.getName(),
+					url:  site.getUrl(),
+				}
+
+				site.inc()
+			}
+		}
+	}(ch, websites.Sites)
+
+	return ch
 }

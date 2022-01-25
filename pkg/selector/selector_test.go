@@ -2,50 +2,13 @@ package selector
 
 import (
 	"fmt"
-	"io/ioutil"
 	"reflect"
-	"sync"
-	"syscall"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
-func TestRace(t *testing.T) {
-	fileName := "tmp.yml"
-	f, err := ioutil.TempFile("", fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer syscall.Unlink(f.Name())
-
-	cfg := `
-    websites:
-        -   name: "test-example-1"
-            url-template: "example1-%d"
-            start-index: 0
-            end-index: 5
-    `
-	ioutil.WriteFile(f.Name(), []byte(cfg), 0644)
-
-	wg := sync.WaitGroup{}
-	defer wg.Wait()
-	wg.Add(6)
-
-	reqs := New(f.Name())
-	for i := 0; i < 6; i++ {
-		go func(w *sync.WaitGroup, ss *States) {
-			defer w.Done()
-			ss.Next()
-		}(&wg, reqs)
-	}
-}
-
 func TestOneStateWebsite(t *testing.T) {
-	fileName := "tmp.yml"
-	f, err := ioutil.TempFile("", fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer syscall.Unlink(f.Name())
 
 	cfg := `
     websites:
@@ -54,16 +17,20 @@ func TestOneStateWebsite(t *testing.T) {
             start-index: 0
             end-index: 5
     `
-	ioutil.WriteFile(f.Name(), []byte(cfg), 0644)
 
-	reqs := New(f.Name())
-	for i := 0; i < 6; i++ {
-		req := reqs.Next()
+	sites := Websites{}
+	if err := yaml.Unmarshal([]byte(cfg), &sites); err != nil {
+		t.Error(err)
+	}
+
+	i := 0
+	for req := range NewHttpReqChan(sites) {
 		exp := &HttpRequest{
-			Id:   i,
-			Name: "test-example-1",
-			Url:  fmt.Sprintf("example1-%d", i),
+			id:   i,
+			name: "test-example-1",
+			url:  fmt.Sprintf("example1-%d", i),
 		}
+		i++
 
 		if !reflect.DeepEqual(exp, req) {
 			t.Error("Expected: ", exp, " got: ", req)
@@ -72,13 +39,6 @@ func TestOneStateWebsite(t *testing.T) {
 }
 
 func TestRoundRobin(t *testing.T) {
-	fileName := "tmp2.yml"
-	f, err := ioutil.TempFile("", fileName)
-	if err != nil {
-		panic(err)
-	}
-	defer syscall.Unlink(f.Name())
-
 	cfg := `
     websites:
     -   name: "test-example-1"
@@ -91,67 +51,66 @@ func TestRoundRobin(t *testing.T) {
         start-index: 10
         end-index: 11
     `
-	ioutil.WriteFile(f.Name(), []byte(cfg), 0644)
 
-	reqs := New(f.Name())
+	sites := Websites{}
+	if err := yaml.Unmarshal([]byte(cfg), &sites); err != nil {
+		t.Error(err)
+	}
 
-	req := reqs.Next()
+	reqs := NewHttpReqChan(sites)
+
+	req := <-reqs
 	exp := &HttpRequest{
-		Id:   0,
-		Name: "test-example-1",
-		Url:  "example1-0",
+		id:   0,
+		name: "test-example-1",
+		url:  "example1-0",
 	}
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
 	}
 
-	req = reqs.Next()
+	req = <-reqs
 	exp = &HttpRequest{
-		Id:   10,
-		Name: "test-example-2",
-		Url:  "example2-10",
+		id:   10,
+		name: "test-example-2",
+		url:  "example2-10",
 	}
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
 	}
 
-	req = reqs.Next()
+	req = <-reqs
 	exp = &HttpRequest{
-		Id:   1,
-		Name: "test-example-1",
-		Url:  "example1-1",
+		id:   1,
+		name: "test-example-1",
+		url:  "example1-1",
 	}
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
 	}
 
-	req = reqs.Next()
+	req = <-reqs
 	exp = &HttpRequest{
-		Id:   11,
-		Name: "test-example-2",
-		Url:  "example2-11",
+		id:   11,
+		name: "test-example-2",
+		url:  "example2-11",
 	}
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
 	}
 
-	req = reqs.Next()
+	req = <-reqs
 	exp = &HttpRequest{
-		Id:   2,
-		Name: "test-example-1",
-		Url:  "example1-2",
+		id:   2,
+		name: "test-example-1",
+		url:  "example1-2",
 	}
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
-	}
-
-	req = reqs.Next()
-	if req != nil {
-		t.Error("Request not nil")
 	}
 }
