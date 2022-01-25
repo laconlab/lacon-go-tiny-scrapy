@@ -8,110 +8,92 @@ import (
 )
 
 type fakeAgents struct {
-    agent string
+	agent string
 }
 
 func (a *fakeAgents) next() string {
-    return a.agent
+	return a.agent
 }
 
-func Test200 (t *testing.T){
-    ua := "Test-Agent-1"
+func Test200(t *testing.T) {
+	agent := "Test-Agent-1"
 
-    call := make(chan bool, 1)
-    ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.Header["User-Agent"][0] != ua {
-            t.Error("Expected User-Agent: ", ua, " got: ", r.Header)
-        }
+	call := make(chan bool, 1)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["User-Agent"][0] != agent {
+			t.Error("Expected User-Agent: ", agent, " got: ", r.Header)
+		}
 
-        call<- true
-    }))
-    defer ts.Close()
+		call <- true
+	}))
+	defer ts.Close()
 
-    agents := &fakeAgents{
-        agent: ua,
-    }
+	resp := headerFilter(ts.URL, agent, time.Second)
 
-    headerFilter := newHeaderFilter(agents, time.Second)
+	select {
+	case <-call:
+	default:
+		t.Error("Server never called")
+	}
 
-    resp := headerFilter.filter(ts.URL)
-
-    select{
-    case <-call:
-    default:
-        t.Error("Server never called")
-    }
-
-    if !resp {
-        t.Error("Expected true got false")
-    }
+	if !resp {
+		t.Error("Expected true got false")
+	}
 
 }
 
 func Test400(t *testing.T) {
-    ua := "Test-Agent-1"
+	agent := "Test-Agent-1"
 
-    call := make(chan bool, 1)
-    ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.Header["User-Agent"][0] != ua {
-            t.Error("Expected User-Agent: ", ua, " got: ", r.Header)
-        }
+	call := make(chan bool, 1)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["User-Agent"][0] != agent {
+			t.Error("Expected User-Agent: ", agent, " got: ", r.Header)
+		}
 
-        call<- true
-        http.Error(w, "Not found", http.StatusNotFound)
-    }))
-    defer ts.Close()
+		call <- true
+		http.Error(w, "Not found", http.StatusNotFound)
+	}))
+	defer ts.Close()
 
-    agents := &fakeAgents{
-        agent: ua,
-    }
+	resp := headerFilter(ts.URL, agent, time.Second)
 
-    headerFilter := newHeaderFilter(agents, time.Second)
+	select {
+	case <-call:
+	default:
+		t.Error("Server never called")
+	}
 
-    resp := headerFilter.filter(ts.URL)
-
-    select{
-    case <-call:
-    default:
-        t.Error("Server never called")
-    }
-
-    if resp {
-        t.Error("Expected false got true")
-    }
+	if resp {
+		t.Error("Expected false got true")
+	}
 }
 
 func TestTimeout(t *testing.T) {
-    ua := "Test-Agent-1"
+	agent := "Test-Agent-1"
 
-    call := make(chan bool, 1)
-    ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        if r.Header["User-Agent"][0] != ua {
-            t.Error("Expected User-Agent: ", ua, " got: ", r.Header)
-        }
+	call := make(chan bool, 1)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["User-Agent"][0] != agent {
+			t.Error("Expected User-Agent: ", agent, " got: ", r.Header)
+		}
 
-        call<- true
+		call <- true
 
-        time.Sleep(2 * time.Second)
-        http.Error(w, "Not found", http.StatusNotFound)
-    }))
-    defer ts.Close()
+		time.Sleep(2 * time.Second)
+		http.Error(w, "Not found", http.StatusNotFound)
+	}))
+	defer ts.Close()
 
-    agents := &fakeAgents{
-        agent: ua,
-    }
+	resp := headerFilter(ts.URL, agent, time.Second)
 
-    headerFilter := newHeaderFilter(agents, time.Second)
+	select {
+	case <-call:
+	default:
+		t.Error("Server never called")
+	}
 
-    resp := headerFilter.filter(ts.URL)
-
-    select{
-    case <-call:
-    default:
-        t.Error("Server never called")
-    }
-
-    if !resp {
-        t.Error("Expected true got false")
-    }
+	if !resp {
+		t.Error("Expected true got false")
+	}
 }
