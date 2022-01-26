@@ -2,33 +2,186 @@ package crawler
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/laconlab/lacon-go-tiny-scrapy/src/selector"
 )
 
+type Tmp struct {
+	url string
+}
+
+func (t Tmp) GetId() int {
+	return 0
+}
+
+func (t Tmp) GetName() string {
+	return ""
+}
+
+func (t Tmp) GetUrl() string {
+	return t.url
+}
 
 func Test200Download(t *testing.T) {
-    cfg := Config{
-        MainWorkerCount: 1,
-        Timeout: time.Second,
-    }
+	cfg := CrawlerConfig{
+		Timeout:        time.Second,
+		BufferSize:     10,
+		RetryQueueSize: 10,
+		WorkerPoolSize: 1,
+	}
 
-    req := selector.HttpRequest{
-        Id: 10,
-        Name: "testname",
-        Url: "example.com",
-    }
+	agents := &HttpAgents{
+		Agents: []string{"test"},
+	}
 
-    reqs := make(chan request, 1)
-    reqs <- req
-    close(reqs)
+	reqs := make(chan httpRequest, 1)
+	crw := NewCrawler(reqs, agents, cfg)
 
-    pageResps := New(reqs, cfg)
+	expected := "test response"
 
-    for resp := range pageResps {
-        fmt.Println(resp)
-    }
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, expected)
+	}))
+	defer ts.Close()
+
+	reqs <- Tmp{url: ts.URL}
+	close(reqs)
+
+	resp := <-crw
+
+	actual := string(resp.pageContnet)
+	if actual != expected {
+		t.Errorf("Expected %s actual %s\n", expected, actual)
+	}
+
+}
+
+func Test400Download(t *testing.T) {
+	cfg := CrawlerConfig{
+		Timeout:        time.Second,
+		BufferSize:     10,
+		RetryQueueSize: 10,
+		WorkerPoolSize: 1,
+	}
+
+	agents := &HttpAgents{
+		Agents: []string{"test"},
+	}
+
+	reqs := make(chan httpRequest, 1)
+	crw := NewCrawler(reqs, agents, cfg)
+
+	notExpected := "test response"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, notExpected)
+	}))
+	defer ts.Close()
+
+	reqs <- Tmp{url: ts.URL}
+	close(reqs)
+
+	resp := <-crw
+	actual := string(resp.pageContnet)
+	if actual == notExpected {
+		t.Error("Got unexpcted result")
+	}
+}
+
+func TestErrorOnFilter(t *testing.T) {
+	cfg := CrawlerConfig{
+		Timeout:        time.Second,
+		BufferSize:     10,
+		RetryQueueSize: 10,
+		WorkerPoolSize: 1,
+	}
+
+	agents := &HttpAgents{
+		Agents: []string{"test"},
+	}
+
+	reqs := make(chan httpRequest, 1)
+	crw := NewCrawler(reqs, agents, cfg)
+
+	expected := "test response"
+
+	callCount := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if callCount == 0 {
+			w.WriteHeader(http.StatusInternalServerError)
+			callCount++
+			return
+		}
+		callCount++
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, expected)
+	}))
+	defer ts.Close()
+
+	reqs <- Tmp{url: ts.URL}
+	close(reqs)
+
+	resp := <-crw
+
+	if callCount != 2 {
+		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
+	}
+
+	actual := string(resp.pageContnet)
+	if actual != expected {
+		t.Error("Got unexpcted result")
+	}
+}
+
+func TestRetry(t *testing.T) {
+	cfg := CrawlerConfig{
+		Timeout:        time.Second,
+		BufferSize:     10,
+		RetryQueueSize: 10,
+		WorkerPoolSize: 1,
+	}
+
+	agents := &HttpAgents{
+		Agents: []string{"test"},
+	}
+
+	reqs := make(chan httpRequest, 1)
+	crw := NewCrawler(reqs, agents, cfg)
+
+	expected := "test response"
+
+	callCount := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if callCount < 3 {
+			w.WriteHeader(http.StatusInternalServerError)
+			callCount++
+			return
+		}
+
+		callCount++
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, expected)
+	}))
+	defer ts.Close()
+
+	reqs <- Tmp{url: ts.URL}
+	close(reqs)
+
+	resp := <-crw
+
+	// filter call -> actual call -> retry filter call -> retry actual call
+	if callCount != 4 {
+		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
+	}
+
+	actual := string(resp.pageContnet)
+	if actual != expected {
+		t.Error("Got unexpcted result")
+	}
 
 }

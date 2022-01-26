@@ -1,105 +1,136 @@
 package crawler
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
 	"time"
-    "github.com/laconlab/lacon-go-tiny-scrapy/src/selector"
 )
 
-
-type Config struct {
-    MainWorkerCount     int
-    RetryWorkerCount    int
-    DownloadTimeout     time.Duration
+type HttpPageResponse struct {
+	request     httpRequest
+	pageContnet []byte
 }
 
-type CrawledPage struct {
-    Page        selector.HttpRequest
-    Content     []byte
+type httpRequest interface {
+	GetId() int
+	GetName() string
+	GetUrl() string
 }
 
-type downloadStatus struct {
-    content []byte
-    retry   bool
+type crawlerWorker struct {
+	reqs      <-chan httpRequest
+	nextAgent func() string
+	timeout   time.Duration
+	output    chan HttpPageResponse
 }
 
-func New(reqs chan selector.HttpRequest, cfg Config) <-chan CrawledPage{
-    responses := make(chan CrawledPage)
-    dead_letter_queue := make(chan selector.HttpRequest)
-
-    for i := 0; i < cfg.MainWorkerCount; i++ {
-        go worker(cfg, responses, reqs, dead_letter_queue)
-    }
-
-    for i := 0; i < cfg.RetryWorkerCount; i++ {
-        go worker(cfg, responses, dead_letter_queue, dead_letter_queue)
-    }
-
-    return responses
+type CrawlerConfig struct {
+	Timeout        time.Duration
+	BufferSize     int
+	RetryQueueSize int
+	WorkerPoolSize int
 }
 
-func worker(
-    cfg Config,
-    resps chan CrawledPage,
-    reqs chan selector.HttpRequest,
-    dlq chan selector.HttpRequest) {
+func NewCrawler(
+	reqs <-chan httpRequest,
+	agents *HttpAgents,
+	cfg CrawlerConfig) <-chan HttpPageResponse {
 
-    for req := range reqs {
-        if resp := download(req.Url, cfg.DownloadTimeout); resp.retry {
-            dlq<-req
-        } else if resp.content != nil {
-            resps<-CrawledPage{
-                Page:       req,
-                Content:    resp.content,
-            }
-        }
-    }
+	wg := sync.WaitGroup{}
+	output := make(chan HttpPageResponse, cfg.BufferSize)
+
+	for i := 0; i < cfg.WorkerPoolSize; i++ {
+		worker := &crawlerWorker{
+			reqs:      reqs,
+			nextAgent: agents.getIter(),
+			timeout:   cfg.Timeout,
+			output:    output,
+		}
+
+		wg.Add(1)
+		go worker.start(&wg, reqs)
+	}
+
+	go cleanup(&wg, output)
+
+	return output
 }
 
-func download(url string, timeout time.Duration) downloadStatus {
-    callback := make(chan downloadStatus, 1)
-    ctx, _ := context.WithTimeout(context.Background(), timeout)
+func cleanup(
+	wg *sync.WaitGroup,
+	output chan HttpPageResponse) {
 
-    go asyncDownload(url, callback, ctx)
-
-    select {
-    case resp := <-callback:
-        return resp
-    case <- ctx.Done():
-        log.Printf("Timeout url %s\n", url)
-        return downloadStatus{retry: true}
-    }
+	wg.Wait()
+	close(output)
 }
 
-func asyncDownload(url string, clb chan downloadStatus, ctx context.Context) {
-    resp, err := http.Get(url)
+func (w *crawlerWorker) start(wg *sync.WaitGroup, input <-chan httpRequest) {
+	defer wg.Done()
 
-    if err != nil {
-        log.Printf("Failed to download: ", err)
-        clb<-downloadStatus{retry: true}
-        return
-    }
+	for req := range input {
+		retry := true
+		var cnt []byte
 
-    defer resp.Body.Close()
-    clb<-readResponse(resp)
+		for retry {
+			cnt, retry = w.download(req)
+
+			if cnt != nil {
+				w.output <- HttpPageResponse{
+					request:     req,
+					pageContnet: cnt,
+				}
+			}
+		}
+	}
 }
 
-func readResponse(resp *http.Response) downloadStatus {
-    if resp.StatusCode >= 500 {
-        return downloadStatus{retry: true}
-    } else if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-        return downloadStatus{retry: false}
-    }
+// return contnet and if request should be retried
+func (w *crawlerWorker) download(req httpRequest) ([]byte, bool) {
+	url := req.GetUrl()
+	agent := w.nextAgent()
+
+	if !headerFilter(url, agent, w.timeout) {
+		log.Printf("Url %s filtered out\n", url)
+		return nil, false
+	}
+
+	client := &http.Client{
+		Timeout: w.timeout,
+	}
+
+	httpReq, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Println("Error while creating new http request", err)
+		return nil, true
+	}
+
+	httpReq.Header.Set("User-Agent", agent)
+
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		log.Println("Error while getting http response", err)
+		return nil, true
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+		log.Printf("Status code %d at url %s\n", resp.StatusCode, url)
+		return nil, false
+	}
+
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+		log.Printf("Recived status %d at url %s\n", resp.StatusCode, url)
+		return nil, true
+	}
 
 	cnt, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error while reading http response %v\n", err)
-        return downloadStatus{retry: true}
+		log.Println("Recived error while reanind a response of url: ", url, err)
+		return nil, true
 	}
 
-    return downloadStatus{content: cnt}
+	return cnt, false
 }
-
