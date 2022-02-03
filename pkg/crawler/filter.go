@@ -16,7 +16,7 @@ func headerFilter(url string, agent string, timeout time.Duration) bool {
 
 	req, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error creating a http head request", err)
 		return true
 	}
 
@@ -24,7 +24,7 @@ func headerFilter(url string, agent string, timeout time.Duration) bool {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error recived while filtering by headers", err)
 		return true
 	}
 

@@ -9,14 +9,14 @@ import (
 
 func TestRoundRobinAgents(t *testing.T) {
 	cfg := `
-    User-Agents:
+    userAgents:
         - "Agent-1"
         - "Agent-2"
         - "Agent-3"
     `
 
-	agents := HttpAgents{}
-	if err := yaml.Unmarshal([]byte(cfg), &agents); err != nil {
+	agents := &HttpAgents{}
+	if err := yaml.Unmarshal([]byte(cfg), agents); err != nil {
 		t.Error(err)
 	}
 
@@ -45,14 +45,14 @@ func TestRoundRobinAgents(t *testing.T) {
 
 func TestAgentsRace(t *testing.T) {
 	cfg := `
-    User-Agents:
+    userAgents:
         - "Agent-1"
         - "Agent-2"
         - "Agent-3"
     `
 
-	agents := HttpAgents{}
-	if err := yaml.Unmarshal([]byte(cfg), &agents); err != nil {
+	agents := &HttpAgents{}
+	if err := yaml.Unmarshal([]byte(cfg), agents); err != nil {
 		t.Error(err)
 	}
 

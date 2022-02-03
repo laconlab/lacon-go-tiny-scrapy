@@ -6,7 +6,7 @@ import (
 )
 
 type HttpAgents struct {
-	Agents []string `yaml:"User-Agents"`
+	Agents []string `yaml:"userAgents"`
 }
 
 func (a *HttpAgents) getIter() func() string {

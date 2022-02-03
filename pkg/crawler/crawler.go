@@ -5,90 +5,59 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 )
 
-type HttpPageResponse struct {
-	request     httpRequest
-	pageContnet []byte
-}
-
-type httpRequest interface {
-	GetId() int
-	GetName() string
-	GetUrl() string
-}
-
-type crawlerWorker struct {
-	reqs      <-chan httpRequest
-	nextAgent func() string
-	timeout   time.Duration
-	output    chan HttpPageResponse
-}
-
-type CrawlerConfig struct {
-	Timeout        time.Duration
-	BufferSize     int
-	RetryQueueSize int
-	WorkerPoolSize int
-}
-
 func NewCrawler(
-	reqs <-chan httpRequest,
+	reqs chan interface{},
 	agents *HttpAgents,
-	cfg CrawlerConfig) <-chan HttpPageResponse {
+	cfg *CrawlerConfig) <-chan interface{} {
 
 	wg := sync.WaitGroup{}
-	output := make(chan HttpPageResponse, cfg.BufferSize)
+	out := make(chan interface{}, cfg.getBufferSize())
 
-	for i := 0; i < cfg.WorkerPoolSize; i++ {
+	for i := 0; i < cfg.getWorkerPoolSize(); i++ {
 		worker := &crawlerWorker{
-			reqs:      reqs,
 			nextAgent: agents.getIter(),
-			timeout:   cfg.Timeout,
-			output:    output,
+			timeout:   cfg.getTimeout(),
 		}
 
 		wg.Add(1)
-		go worker.start(&wg, reqs)
+		go worker.start(&wg, reqs, out)
 	}
 
-	go cleanup(&wg, output)
+	go func(wg *sync.WaitGroup, out chan interface{}) {
+		wg.Wait()
+		close(out)
+		log.Println("Stopping all crawler workers")
+	}(&wg, out)
 
-	return output
+	return out
 }
 
-func cleanup(
-	wg *sync.WaitGroup,
-	output chan HttpPageResponse) {
-
-	wg.Wait()
-	close(output)
-}
-
-func (w *crawlerWorker) start(wg *sync.WaitGroup, input <-chan httpRequest) {
+func (w *crawlerWorker) start(wg *sync.WaitGroup, input chan interface{}, out chan interface{}) {
+	log.Println("Starting new crawler worker")
 	defer wg.Done()
 
 	for req := range input {
+		req, ok := req.(HttpRequest)
+		if !ok {
+			continue
+		}
+
 		retry := true
 		var cnt []byte
 
 		for retry {
-			cnt, retry = w.download(req)
-
-			if cnt != nil {
-				w.output <- HttpPageResponse{
-					request:     req,
-					pageContnet: cnt,
-				}
+			if cnt, retry = w.download(req.GetUrl()); cnt != nil {
+				out <- newHttpPageResponse(req, cnt)
+				break
 			}
 		}
 	}
 }
 
 // return contnet and if request should be retried
-func (w *crawlerWorker) download(req httpRequest) ([]byte, bool) {
-	url := req.GetUrl()
+func (w *crawlerWorker) download(url string) ([]byte, bool) {
 	agent := w.nextAgent()
 
 	if !headerFilter(url, agent, w.timeout) {

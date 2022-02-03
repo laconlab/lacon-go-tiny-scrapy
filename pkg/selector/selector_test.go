@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -13,19 +14,19 @@ func TestOneStateWebsite(t *testing.T) {
 	cfg := `
     websites:
         -   name: "test-example-1"
-            url-template: "example1-%d"
-            start-index: 0
-            end-index: 5
+            urlTemplate: "example1-%d"
+            startIndex: 0
+            endIndex: 5
     `
 
-	sites := Websites{}
-	if err := yaml.Unmarshal([]byte(cfg), &sites); err != nil {
+	sites := &Websites{}
+	if err := yaml.Unmarshal([]byte(cfg), sites); err != nil {
 		t.Error(err)
 	}
 
 	i := 0
 	for req := range NewHttpReqChan(sites) {
-		exp := HttpRequest{
+		exp := &HttpRequest{
 			id:   i,
 			name: "test-example-1",
 			url:  fmt.Sprintf("example1-%d", i),
@@ -42,25 +43,25 @@ func TestRoundRobin(t *testing.T) {
 	cfg := `
     websites:
     -   name: "test-example-1"
-        url-template: "example1-%d"
-        start-index: 0
-        end-index: 2
+        urlTemplate: "example1-%d"
+        startIndex: 0
+        endIndex: 2
 
     -   name: "test-example-2"
-        url-template: "example2-%d"
-        start-index: 10
-        end-index: 11
+        urlTemplate: "example2-%d"
+        startIndex: 10
+        endIndex: 11
     `
 
-	sites := Websites{}
-	if err := yaml.Unmarshal([]byte(cfg), &sites); err != nil {
+	sites := &Websites{}
+	if err := yaml.Unmarshal([]byte(cfg), sites); err != nil {
 		t.Error(err)
 	}
 
 	reqs := NewHttpReqChan(sites)
 
 	req := <-reqs
-	exp := HttpRequest{
+	exp := &HttpRequest{
 		id:   0,
 		name: "test-example-1",
 		url:  "example1-0",
@@ -71,7 +72,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = HttpRequest{
+	exp = &HttpRequest{
 		id:   10,
 		name: "test-example-2",
 		url:  "example2-10",
@@ -82,7 +83,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = HttpRequest{
+	exp = &HttpRequest{
 		id:   1,
 		name: "test-example-1",
 		url:  "example1-1",
@@ -93,7 +94,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = HttpRequest{
+	exp = &HttpRequest{
 		id:   11,
 		name: "test-example-2",
 		url:  "example2-11",
@@ -104,7 +105,7 @@ func TestRoundRobin(t *testing.T) {
 	}
 
 	req = <-reqs
-	exp = HttpRequest{
+	exp = &HttpRequest{
 		id:   2,
 		name: "test-example-1",
 		url:  "example1-2",
@@ -112,5 +113,11 @@ func TestRoundRobin(t *testing.T) {
 
 	if !reflect.DeepEqual(exp, req) {
 		t.Error("Expected: ", exp, " got: ", req)
+	}
+
+	select {
+	case <-time.After(time.Millisecond):
+	case <-reqs:
+		t.Error("should be null")
 	}
 }

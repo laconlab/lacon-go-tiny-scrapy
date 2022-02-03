@@ -12,32 +12,27 @@ type Tmp struct {
 	url string
 }
 
-func (t Tmp) GetId() int {
+func (t *Tmp) GetId() int {
 	return 0
 }
 
-func (t Tmp) GetName() string {
+func (t *Tmp) GetName() string {
 	return ""
 }
 
-func (t Tmp) GetUrl() string {
+func (t *Tmp) GetUrl() string {
 	return t.url
 }
 
 func Test200Download(t *testing.T) {
-	cfg := CrawlerConfig{
-		Timeout:        time.Second,
-		BufferSize:     10,
-		RetryQueueSize: 10,
-		WorkerPoolSize: 1,
-	}
+	cfg := &CrawlerConfig{}
+	cfg.Config.Timeout = time.Second
+	cfg.Config.BufferSize = 10
+	cfg.Config.WorkerPoolSize = 1
 
 	agents := &HttpAgents{
 		Agents: []string{"test"},
 	}
-
-	reqs := make(chan httpRequest, 1)
-	crw := NewCrawler(reqs, agents, cfg)
 
 	expected := "test response"
 
@@ -47,12 +42,14 @@ func Test200Download(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs <- Tmp{url: ts.URL}
+	reqs := make(chan interface{}, 1)
+	reqs <- &Tmp{url: ts.URL}
 	close(reqs)
+	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := <-crw
+	resp := (<-crw).(HttpPageResponse)
 
-	actual := string(resp.pageContnet)
+	actual := string(resp.GetContnet())
 	if actual != expected {
 		t.Errorf("Expected %s actual %s\n", expected, actual)
 	}
@@ -60,19 +57,14 @@ func Test200Download(t *testing.T) {
 }
 
 func Test400Download(t *testing.T) {
-	cfg := CrawlerConfig{
-		Timeout:        time.Second,
-		BufferSize:     10,
-		RetryQueueSize: 10,
-		WorkerPoolSize: 1,
-	}
+	cfg := &CrawlerConfig{}
+	cfg.Config.Timeout = time.Second
+	cfg.Config.BufferSize = 10
+	cfg.Config.WorkerPoolSize = 1
 
 	agents := &HttpAgents{
 		Agents: []string{"test"},
 	}
-
-	reqs := make(chan httpRequest, 1)
-	crw := NewCrawler(reqs, agents, cfg)
 
 	notExpected := "test response"
 
@@ -82,30 +74,27 @@ func Test400Download(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs <- Tmp{url: ts.URL}
+	reqs := make(chan interface{}, 1)
+	reqs <- &Tmp{url: ts.URL}
 	close(reqs)
+	crw := NewCrawler(reqs, agents, cfg)
 
 	resp := <-crw
-	actual := string(resp.pageContnet)
-	if actual == notExpected {
+
+	if resp != nil {
 		t.Error("Got unexpcted result")
 	}
 }
 
 func TestErrorOnFilter(t *testing.T) {
-	cfg := CrawlerConfig{
-		Timeout:        time.Second,
-		BufferSize:     10,
-		RetryQueueSize: 10,
-		WorkerPoolSize: 1,
-	}
+	cfg := &CrawlerConfig{}
+	cfg.Config.Timeout = time.Second
+	cfg.Config.BufferSize = 10
+	cfg.Config.WorkerPoolSize = 1
 
 	agents := &HttpAgents{
 		Agents: []string{"test"},
 	}
-
-	reqs := make(chan httpRequest, 1)
-	crw := NewCrawler(reqs, agents, cfg)
 
 	expected := "test response"
 
@@ -123,35 +112,32 @@ func TestErrorOnFilter(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs <- Tmp{url: ts.URL}
+	reqs := make(chan interface{}, 1)
+	reqs <- &Tmp{url: ts.URL}
 	close(reqs)
+	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := <-crw
+	resp := (<-crw).(HttpPageResponse)
 
 	if callCount != 2 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.pageContnet)
+	actual := string(resp.GetContnet())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}
 }
 
 func TestRetry(t *testing.T) {
-	cfg := CrawlerConfig{
-		Timeout:        time.Second,
-		BufferSize:     10,
-		RetryQueueSize: 10,
-		WorkerPoolSize: 1,
-	}
+	cfg := &CrawlerConfig{}
+	cfg.Config.Timeout = time.Second
+	cfg.Config.BufferSize = 10
+	cfg.Config.WorkerPoolSize = 1
 
 	agents := &HttpAgents{
 		Agents: []string{"test"},
 	}
-
-	reqs := make(chan httpRequest, 1)
-	crw := NewCrawler(reqs, agents, cfg)
 
 	expected := "test response"
 
@@ -169,17 +155,19 @@ func TestRetry(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs <- Tmp{url: ts.URL}
+	reqs := make(chan interface{}, 1)
+	reqs <- &Tmp{url: ts.URL}
 	close(reqs)
+	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := <-crw
+	resp := (<-crw).(HttpPageResponse)
 
 	// filter call -> actual call -> retry filter call -> retry actual call
 	if callCount != 4 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.pageContnet)
+	actual := string(resp.GetContnet())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}
