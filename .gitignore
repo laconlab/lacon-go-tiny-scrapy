@@ -1,5 +1,6 @@
 .idea/
 output/
+data/
 *.log
 
 # Binaries for programs and plugins

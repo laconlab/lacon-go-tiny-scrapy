@@ -33,7 +33,7 @@ func newHttpPageResponse(req HttpRequest, cnt []byte) *HttpPageResponse {
 		Id:      req.GetId(),
 		Url:     req.GetUrl(),
 		Name:    req.GetName(),
-		Contnet: cnt,
+		Content: cnt,
 	}
 }
 
