@@ -47,9 +47,9 @@ func Test200Download(t *testing.T) {
 	close(reqs)
 	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := (<-crw).(HttpPageResponse)
+	resp := (<-crw).(*HttpPageResponse)
 
-	actual := string(resp.GetContnet())
+	actual := string(resp.GetContent())
 	if actual != expected {
 		t.Errorf("Expected %s actual %s\n", expected, actual)
 	}
@@ -117,13 +117,13 @@ func TestErrorOnFilter(t *testing.T) {
 	close(reqs)
 	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := (<-crw).(HttpPageResponse)
+	resp := (<-crw).(*HttpPageResponse)
 
 	if callCount != 2 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.GetContnet())
+	actual := string(resp.GetContent())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}
@@ -160,14 +160,14 @@ func TestRetry(t *testing.T) {
 	close(reqs)
 	crw := NewCrawler(reqs, agents, cfg)
 
-	resp := (<-crw).(HttpPageResponse)
+	resp := (<-crw).(*HttpPageResponse)
 
 	// filter call -> actual call -> retry filter call -> retry actual call
 	if callCount != 4 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.GetContnet())
+	actual := string(resp.GetContent())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}

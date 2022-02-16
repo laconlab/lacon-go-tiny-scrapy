@@ -17,8 +17,8 @@ func NewCrawler(
 
 	for i := 0; i < cfg.getWorkerPoolSize(); i++ {
 		worker := &crawlerWorker{
-			nextAgent: agents.getIter(),
-			timeout:   cfg.getTimeout(),
+			agents:  agents,
+			timeout: cfg.getTimeout(),
 		}
 
 		wg.Add(1)
@@ -58,7 +58,7 @@ func (w *crawlerWorker) start(wg *sync.WaitGroup, input chan interface{}, out ch
 
 // return contnet and if request should be retried
 func (w *crawlerWorker) download(url string) ([]byte, bool) {
-	agent := w.nextAgent()
+	agent := w.agents.next()
 
 	if !headerFilter(url, agent, w.timeout) {
 		log.Printf("Url %s filtered out\n", url)

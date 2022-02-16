@@ -48,8 +48,8 @@ type HttpRequestIter interface {
 }
 
 type crawlerWorker struct {
-	nextAgent func() string
-	timeout   time.Duration
+	agents  *HttpAgents
+	timeout time.Duration
 }
 
 type CrawlerConfig struct {

@@ -1,22 +1,15 @@
 // round robin agent list
 package crawler
 
-import (
-	"log"
-)
-
 type HttpAgents struct {
 	Agents []string `yaml:"userAgents"`
+	id     int
 }
 
-func (a *HttpAgents) getIter() func() string {
+func (a *HttpAgents) next() string {
 	if len(a.Agents) == 0 {
-		log.Fatal("No agents")
+		return ""
 	}
-
-	id := 0
-	return func() string {
-		id = (id + 1) % len(a.Agents)
-		return a.Agents[id]
-	}
+	a.id = (a.id + 1) % len(a.Agents)
+	return a.Agents[a.id]
 }
