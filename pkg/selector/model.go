@@ -9,26 +9,18 @@ type Websites struct {
 type Website struct {
 	Name        string `yaml:"name"`
 	UrlTemplate string `yaml:"urlTemplate"`
-	StartId     int    `yaml:"startIndex"`
+	Id          int    `yaml:"startIndex"`
 	EndId       int    `yaml:"endIndex"`
 }
 
-func (w *Website) getId() int {
-	return w.StartId
-}
-
-func (w *Website) getName() string {
-	return w.Name
-}
-
 func (w *Website) getUrl() string {
-	return fmt.Sprintf(w.UrlTemplate, w.getId())
+	return fmt.Sprintf(w.UrlTemplate, w.Id)
 }
 
 func (w *Website) isDone() bool {
-	return w.StartId > w.EndId
+	return w.Id > w.EndId
 }
 
 func (w *Website) inc() {
-	w.StartId++
+	w.Id++
 }

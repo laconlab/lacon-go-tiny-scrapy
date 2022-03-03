@@ -22,8 +22,8 @@ func NewHttpReqChan(websites *Websites) chan *result.FullWebsiteResult {
 				}
 
 				req := &result.FullWebsiteResult{}
-				req.SetId(site.getId())
-				req.SetWebsite(site.getName())
+				req.SetId(site.Id)
+				req.SetWebsite(site.Name)
 				req.SetUrl(site.getUrl())
 				site.inc()
 				ch <- req

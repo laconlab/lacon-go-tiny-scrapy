@@ -1,4 +1,4 @@
-package selector
+package selector_test
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
+	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/selector"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,13 +21,13 @@ func TestOneStateWebsite(t *testing.T) {
             endIndex: 5
     `
 
-	sites := &Websites{}
+	sites := &selector.Websites{}
 	if err := yaml.Unmarshal([]byte(cfg), sites); err != nil {
 		t.Error(err)
 	}
 
 	i := 0
-	for req := range NewHttpReqChan(sites) {
+	for req := range selector.NewHttpReqChan(sites) {
 		exp := &result.FullWebsiteResult{}
 		exp.SetId(i)
 		exp.SetWebsite("test-example-1")
@@ -53,12 +54,12 @@ func TestRoundRobin(t *testing.T) {
         endIndex: 11
     `
 
-	sites := &Websites{}
+	sites := &selector.Websites{}
 	if err := yaml.Unmarshal([]byte(cfg), sites); err != nil {
 		t.Error(err)
 	}
 
-	reqs := NewHttpReqChan(sites)
+	reqs := selector.NewHttpReqChan(sites)
 
 	req := <-reqs
 	exp := &result.FullWebsiteResult{}
