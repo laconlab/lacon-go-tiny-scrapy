@@ -2,24 +2,17 @@ package persistor
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 )
 
-func NewStore(cfg *StoreConfig, items <-chan interface{}) {
+func NewStore(cfg *PersistorConfig, items <-chan []byte) {
 	wg := &sync.WaitGroup{}
 	id := 0
-	fullPathPattern := cfg.getSavePath() + cfg.getNamePattern() + ".gz"
+	fullPathPattern := cfg.getPath() + cfg.getNamePattern() + ".gz"
 	for item := range items {
-		item, ok := item.(Page)
-		if !ok {
-			log.Println("Item does not implement Page")
-			continue
-		}
-
 		wg.Add(1)
 		go store(wg, item, fmt.Sprintf(fullPathPattern, id))
 		id++
@@ -28,14 +21,8 @@ func NewStore(cfg *StoreConfig, items <-chan interface{}) {
 	wg.Wait()
 }
 
-func store(wg *sync.WaitGroup, page Page, path string) {
+func store(wg *sync.WaitGroup, page []byte, path string) {
 	defer wg.Done()
-
-	b, err := json.Marshal(page)
-	if err != nil {
-		log.Println("Cannot convert to json", err)
-		return
-	}
 
 	f, err := os.Create(path)
 	if err != nil {
@@ -44,7 +31,7 @@ func store(wg *sync.WaitGroup, page Page, path string) {
 	}
 
 	w := gzip.NewWriter(f)
-	w.Write(b)
+	w.Write(page)
 	w.Close()
 	f.Close()
 }

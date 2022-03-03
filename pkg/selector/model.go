@@ -1,26 +1,6 @@
 package selector
 
-import (
-	"fmt"
-)
-
-type HttpRequest struct {
-	id   int
-	name string
-	url  string
-}
-
-func (r *HttpRequest) GetId() int {
-	return r.id
-}
-
-func (r *HttpRequest) GetName() string {
-	return r.name
-}
-
-func (r *HttpRequest) GetUrl() string {
-	return r.url
-}
+import "fmt"
 
 type Websites struct {
 	Sites []*Website `yaml:"websites"`

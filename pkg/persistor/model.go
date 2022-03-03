@@ -1,61 +1,21 @@
 package persistor
 
-type StoreConfig struct {
+type PersistorConfig struct {
 	Config struct {
-		SavePath    string `yaml:"savePath"`
+		Path        string `yaml:"savePath"`
 		NamePattern string `yaml:"namePattern"`
+		BufferSize  int    `yaml:"bufferSize"`
 	} `yaml:"persistor"`
 }
 
-func (s *StoreConfig) getSavePath() string {
-	return s.Config.SavePath
+func (s *PersistorConfig) getPath() string {
+	return s.Config.Path
 }
 
-func (s *StoreConfig) getNamePattern() string {
+func (s *PersistorConfig) getNamePattern() string {
 	return s.Config.NamePattern
 }
 
-type LoadConfig struct {
-	Config struct {
-		LoadPath   string `yaml:"savePath"`
-		BufferSize int    `yaml:"bufferSize"`
-	} `yaml:"persistor"`
-}
-
-func (s *LoadConfig) getLoadPath() string {
-	return s.Config.LoadPath
-}
-
-func (s *LoadConfig) getBufferSize() int {
+func (s *PersistorConfig) getBufferSize() int {
 	return s.Config.BufferSize
-}
-
-type Page interface {
-	GetId() int
-	GetName() string
-	GetUrl() string
-	GetContent() []byte
-}
-
-type PageImpl struct {
-	Id      int    `json:"id"`
-	Url     string `json:"url"`
-	Name    string `json:"name"`
-	Content []byte `json:"content"`
-}
-
-func (h *PageImpl) GetUrl() string {
-	return h.Url
-}
-
-func (h *PageImpl) GetId() int {
-	return h.Id
-}
-
-func (h *PageImpl) GetName() string {
-	return h.Name
-}
-
-func (h *PageImpl) GetContent() []byte {
-	return h.Content
 }

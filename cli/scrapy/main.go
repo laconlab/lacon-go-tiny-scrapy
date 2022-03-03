@@ -6,6 +6,7 @@ import (
 
 	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/crawler"
 	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/persistor"
+	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/selector"
 	"gopkg.in/yaml.v2"
 )
@@ -32,15 +33,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	httpReqs := selector.NewHttpReqChan(websites)
-
-	httpPages := crawler.NewCrawler(httpReqs, agents, crawlerCfg)
-
-	persistorCfg := &persistor.StoreConfig{}
+	persistorCfg := &persistor.PersistorConfig{}
 	if err := yaml.Unmarshal(cfg, persistorCfg); err != nil {
 		log.Fatal(err)
 	}
 
-	persistor.NewStore(persistorCfg, httpPages)
+	httpReqs := selector.NewHttpReqChan(websites)
 
+	httpPages := crawler.NewCrawler(httpReqs, agents, crawlerCfg)
+
+	rawPages := make(chan []byte, 10)
+
+	go func(in chan *result.FullWebsiteResult, out chan []byte) {
+		defer close(out)
+		for result := range in {
+			out <- result.GetRawWebsiteAsJSON()
+		}
+	}(httpPages, rawPages)
+
+	persistor.NewStore(persistorCfg, rawPages)
 }

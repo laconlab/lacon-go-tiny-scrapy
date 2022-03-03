@@ -6,22 +6,21 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
-type Tmp struct {
-	url string
+type tmp struct {
+	url     string
+	content []byte
 }
 
-func (t *Tmp) GetId() int {
-	return 0
-}
-
-func (t *Tmp) GetName() string {
-	return ""
-}
-
-func (t *Tmp) GetUrl() string {
+func (t *tmp) GetUrl() string {
 	return t.url
+}
+
+func (t *tmp) SetRawContent(cnt []byte) {
+	t.content = cnt
 }
 
 func Test200Download(t *testing.T) {
@@ -42,14 +41,14 @@ func Test200Download(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs := make(chan interface{}, 1)
-	reqs <- &Tmp{url: ts.URL}
-	close(reqs)
-	crw := NewCrawler(reqs, agents, cfg)
+	logs := make(chan *result.FullWebsiteResult, 1)
+	logs <- &result.FullWebsiteResult{Url: ts.URL}
+	close(logs)
+	crw := NewCrawler(logs, agents, cfg)
 
-	resp := (<-crw).(*HttpPageResponse)
+	resp := <-crw
 
-	actual := string(resp.GetContent())
+	actual := string(resp.GetRawContent())
 	if actual != expected {
 		t.Errorf("Expected %s actual %s\n", expected, actual)
 	}
@@ -74,13 +73,12 @@ func Test400Download(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs := make(chan interface{}, 1)
-	reqs <- &Tmp{url: ts.URL}
-	close(reqs)
-	crw := NewCrawler(reqs, agents, cfg)
+	logs := make(chan *result.FullWebsiteResult, 1)
+	logs <- &result.FullWebsiteResult{Url: ts.URL}
+	close(logs)
+	crw := NewCrawler(logs, agents, cfg)
 
 	resp := <-crw
-
 	if resp != nil {
 		t.Error("Got unexpcted result")
 	}
@@ -112,18 +110,18 @@ func TestErrorOnFilter(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs := make(chan interface{}, 1)
-	reqs <- &Tmp{url: ts.URL}
-	close(reqs)
-	crw := NewCrawler(reqs, agents, cfg)
+	logs := make(chan *result.FullWebsiteResult, 1)
+	logs <- &result.FullWebsiteResult{Url: ts.URL}
+	close(logs)
+	crw := NewCrawler(logs, agents, cfg)
 
-	resp := (<-crw).(*HttpPageResponse)
+	resp := <-crw
 
 	if callCount != 2 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.GetContent())
+	actual := string(resp.GetRawContent())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}
@@ -155,19 +153,18 @@ func TestRetry(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	reqs := make(chan interface{}, 1)
-	reqs <- &Tmp{url: ts.URL}
-	close(reqs)
-	crw := NewCrawler(reqs, agents, cfg)
+	logs := make(chan *result.FullWebsiteResult, 1)
+	logs <- &result.FullWebsiteResult{Url: ts.URL}
+	close(logs)
+	crw := NewCrawler(logs, agents, cfg)
 
-	resp := (<-crw).(*HttpPageResponse)
-
+	resp := <-crw
 	// filter call -> actual call -> retry filter call -> retry actual call
 	if callCount != 4 {
 		t.Errorf("Expected to download page 2 times, actual %d times\n", callCount)
 	}
 
-	actual := string(resp.GetContent())
+	actual := string(resp.GetRawContent())
 	if actual != expected {
 		t.Error("Got unexpcted result")
 	}

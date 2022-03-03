@@ -4,49 +4,6 @@ import (
 	"time"
 )
 
-// TODO add download time
-type HttpPageResponse struct {
-	Id      int    `json:"id"`
-	Name    string `json:"website"`
-	Url     string `json:"url"`
-	Content []byte `json:"content"`
-}
-
-func (h *HttpPageResponse) GetUrl() string {
-	return h.Url
-}
-
-func (h *HttpPageResponse) GetId() int {
-	return h.Id
-}
-
-func (h *HttpPageResponse) GetName() string {
-	return h.Name
-}
-
-func (h *HttpPageResponse) GetContent() []byte {
-	return h.Content
-}
-
-func newHttpPageResponse(req HttpRequest, cnt []byte) *HttpPageResponse {
-	return &HttpPageResponse{
-		Id:      req.GetId(),
-		Url:     req.GetUrl(),
-		Name:    req.GetName(),
-		Content: cnt,
-	}
-}
-
-type HttpRequest interface {
-	GetId() int
-	GetUrl() string
-	GetName() string
-}
-
-type HttpRequestIter interface {
-	Next() interface{}
-}
-
 type crawlerWorker struct {
 	agents  *HttpAgents
 	timeout time.Duration

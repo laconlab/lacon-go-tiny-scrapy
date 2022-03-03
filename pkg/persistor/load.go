@@ -7,23 +7,25 @@ import (
 	"log"
 	"os"
 	"sync"
+
+	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
-func NewLoader(cfg *LoadConfig) chan interface{} {
+func NewLoader(cfg *PersistorConfig) chan *result.FullWebsiteResult {
 	wg := sync.WaitGroup{}
-	output := make(chan interface{}, cfg.getBufferSize())
+	output := make(chan *result.FullWebsiteResult, cfg.getBufferSize())
 
-	files, err := ioutil.ReadDir(cfg.getLoadPath())
+	files, err := ioutil.ReadDir(cfg.getPath())
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, file := range files {
 		wg.Add(1)
-		go load(&wg, cfg.getLoadPath()+file.Name(), output)
+		go load(&wg, cfg.getPath()+file.Name(), output)
 	}
 
-	go func(wg *sync.WaitGroup, out chan interface{}) {
+	go func(wg *sync.WaitGroup, out chan *result.FullWebsiteResult) {
 		wg.Wait()
 		close(output)
 		log.Println("Loading completed, channel closed")
@@ -34,7 +36,7 @@ func NewLoader(cfg *LoadConfig) chan interface{} {
 	return output
 }
 
-func load(wg *sync.WaitGroup, path string, out chan interface{}) {
+func load(wg *sync.WaitGroup, path string, out chan *result.FullWebsiteResult) {
 	defer wg.Done()
 
 	f, err := os.Open(path)
@@ -57,7 +59,7 @@ func load(wg *sync.WaitGroup, path string, out chan interface{}) {
 		return
 	}
 
-	page := &PageImpl{}
+	page := &result.FullWebsiteResult{}
 	if err = json.Unmarshal(b, page); err != nil {
 		log.Println("Failed to convert to page", path, err)
 		return

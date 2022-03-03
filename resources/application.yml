@@ -1,7 +1,7 @@
 crawler:
     timeout: 10s
     bufferSize: 10000
-    workerPoolSize: 200
+    workerPoolSize: 1
 
 persistor:
     savePath: "data/"
@@ -13,12 +13,24 @@ websites:
     - name: "indexhr"
       urlTemplate: "https://www.index.hr/clanak.aspx?id=%d"
       startIndex: 2270710
-      endIndex: 2270720
-    - name: "24-sata"
-      urlTemplate: "https://www.24sata.hr/a-%d"
-      startIndex: 740096
-      endIndex: 741096
-
+      endIndex: 2270715
+      componets:
+          - componet: "title"
+            tag: "h1"
+            attribute: "class"
+            value: "vijesti-text-parsed title"
+          - componet: "url"
+            tag: "link"
+            attribute: "rel"
+            value: "og:url"
+            extract: "href"
+          - componet: "article"
+            tag: "div"
+            attribute: "class"
+            value: "text vijesti-link-underline"
+            filters: ["div", "br", "script", "style", "i", "a", "img",
+            "noscript", "font", "b", "strong", "blockquote",
+            "iframe", "span", "em", "video"]
 
 userAgents:
     - "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"

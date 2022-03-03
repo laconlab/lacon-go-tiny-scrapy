@@ -5,15 +5,18 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
+
+	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
 func NewCrawler(
-	reqs chan interface{},
+	reqs chan *result.FullWebsiteResult,
 	agents *HttpAgents,
-	cfg *CrawlerConfig) <-chan interface{} {
+	cfg *CrawlerConfig) chan *result.FullWebsiteResult {
 
 	wg := sync.WaitGroup{}
-	out := make(chan interface{}, cfg.getBufferSize())
+	out := make(chan *result.FullWebsiteResult, cfg.getBufferSize())
 
 	for i := 0; i < cfg.getWorkerPoolSize(); i++ {
 		worker := &crawlerWorker{
@@ -25,7 +28,7 @@ func NewCrawler(
 		go worker.start(&wg, reqs, out)
 	}
 
-	go func(wg *sync.WaitGroup, out chan interface{}) {
+	go func(wg *sync.WaitGroup, out chan *result.FullWebsiteResult) {
 		wg.Wait()
 		close(out)
 		log.Println("Stopping all crawler workers")
@@ -34,22 +37,23 @@ func NewCrawler(
 	return out
 }
 
-func (w *crawlerWorker) start(wg *sync.WaitGroup, input chan interface{}, out chan interface{}) {
+func (w *crawlerWorker) start(
+	wg *sync.WaitGroup,
+	input chan *result.FullWebsiteResult,
+	out chan *result.FullWebsiteResult) {
+
 	log.Println("Starting new crawler worker")
 	defer wg.Done()
 
-	for req := range input {
-		req, ok := req.(HttpRequest)
-		if !ok {
-			continue
-		}
-
-		retry := true
-		var cnt []byte
-
-		for retry {
-			if cnt, retry = w.download(req.GetUrl()); cnt != nil {
-				out <- newHttpPageResponse(req, cnt)
+	for wlog := range input {
+		for {
+			if cnt, retry := w.download(wlog.GetUrl()); cnt != nil {
+				wlog.SetRawContent(cnt)
+				ts := time.Now()
+				wlog.SetDownloadDate(ts.Format("YYYYMMDD"))
+				out <- wlog
+				break
+			} else if !retry {
 				break
 			}
 		}
