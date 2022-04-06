@@ -14,6 +14,23 @@ type FullWebsiteResult struct {
 	ParsedContent map[string]string `json:"content"` // TODO think about it
 }
 
+func NewFullWebsiteResultChan() chan *FullWebsiteResult {
+	out := make(chan *FullWebsiteResult)
+	go func(out chan *FullWebsiteResult) {
+		for {
+			out <- &FullWebsiteResult{
+				Id:            0,
+				Website:       "",
+				Url:           "",
+				DownloadDate:  "",
+				RawContent:    []byte{},
+				ParsedContent: map[string]string{},
+			}
+		}
+	}(out)
+	return out
+}
+
 func (w *FullWebsiteResult) SetId(id int) {
 	w.Id = id
 }
@@ -46,10 +63,8 @@ func (w *FullWebsiteResult) GetRawContent() []byte {
 	return w.RawContent
 }
 
-func (w *FullWebsiteResult) SetParsedContent() {
-}
-
-func (w *FullWebsiteResult) GetParsedContent() {
+func (w *FullWebsiteResult) SetParsedContent(cnt map[string]string) {
+	w.ParsedContent = cnt
 }
 
 func (w *FullWebsiteResult) GetRawWebsiteAsJSON() []byte {

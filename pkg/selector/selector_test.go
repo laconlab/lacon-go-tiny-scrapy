@@ -2,7 +2,6 @@ package selector_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -26,17 +25,20 @@ func TestOneStateWebsite(t *testing.T) {
 		t.Error(err)
 	}
 
+	reqs := result.NewFullWebsiteResultChan()
 	i := 0
-	for req := range selector.NewHttpReqChan(sites) {
-		exp := &result.FullWebsiteResult{}
-		exp.SetId(i)
-		exp.SetWebsite("test-example-1")
-		exp.SetUrl(fmt.Sprintf("example1-%d", i))
+	for req := range selector.NewHttpReqChan(sites, reqs) {
+		if req.Id != i {
+			t.Errorf("Expected id %v got %v\n", i, req.Id)
+		}
+		if req.GetWebsite() != "test-example-1" {
+			t.Errorf("Expected test-example-1 got %v\n", req.GetWebsite())
+		}
+		if req.GetUrl() != fmt.Sprintf("example1-%d", i) {
+			t.Errorf("Expected %v got %v\n", fmt.Sprintf("example1-%d", i), req.GetUrl())
+		}
 		i++
 
-		if !reflect.DeepEqual(exp, req) {
-			t.Error("Expected: ", exp, " got: ", req)
-		}
 	}
 }
 
@@ -59,52 +61,62 @@ func TestRoundRobin(t *testing.T) {
 		t.Error(err)
 	}
 
-	reqs := selector.NewHttpReqChan(sites)
+	eReqs := result.NewFullWebsiteResultChan()
+	reqs := selector.NewHttpReqChan(sites, eReqs)
 
 	req := <-reqs
-	exp := &result.FullWebsiteResult{}
-	exp.SetId(0)
-	exp.SetWebsite("test-example-1")
-	exp.SetUrl("example1-0")
-
-	if !reflect.DeepEqual(exp, req) {
-		t.Error("Expected: ", exp, " got: ", req)
+	if req.Id != 0 {
+		t.Errorf("Expected 0 got %v\n", req.Id)
+	}
+	if req.GetWebsite() != "test-example-1" {
+		t.Errorf("Expected test-example-1 got %v\n", req.GetWebsite())
+	}
+	if req.GetUrl() != "example1-0" {
+		t.Errorf("Expected example1-0 got %v\n", req.GetUrl())
 	}
 
 	req = <-reqs
-	exp.SetId(10)
-	exp.SetWebsite("test-example-2")
-	exp.SetUrl("example2-10")
-
-	if !reflect.DeepEqual(exp, req) {
-		t.Error("Expected: ", exp, " got: ", req)
+	if req.Id != 10 {
+		t.Errorf("Expected 10 got %v\n", req.Id)
+	}
+	if req.GetWebsite() != "test-example-2" {
+		t.Errorf("Expected test-example-2 got %v\n", req.GetWebsite())
+	}
+	if req.GetUrl() != "example2-10" {
+		t.Errorf("Expected example2-10 got %v\n", req.GetUrl())
 	}
 
 	req = <-reqs
-	exp.SetId(1)
-	exp.SetWebsite("test-example-1")
-	exp.SetUrl("example1-1")
-
-	if !reflect.DeepEqual(exp, req) {
-		t.Error("Expected: ", exp, " got: ", req)
+	if req.Id != 1 {
+		t.Errorf("Expected 1 got %v\n", req.Id)
+	}
+	if req.GetWebsite() != "test-example-1" {
+		t.Errorf("Expected test-example-1 got %v\n", req.GetWebsite())
+	}
+	if req.GetUrl() != "example1-1" {
+		t.Errorf("Expected example1-1 got %v\n", req.GetUrl())
 	}
 
 	req = <-reqs
-	exp.SetId(11)
-	exp.SetWebsite("test-example-2")
-	exp.SetUrl("example2-11")
-
-	if !reflect.DeepEqual(exp, req) {
-		t.Error("Expected: ", exp, " got: ", req)
+	if req.Id != 11 {
+		t.Errorf("Expected 11 got %v\n", req.Id)
+	}
+	if req.GetWebsite() != "test-example-2" {
+		t.Errorf("Expected test-example-2 got %v\n", req.GetWebsite())
+	}
+	if req.GetUrl() != "example2-11" {
+		t.Errorf("Expected example2-11 got %v\n", req.GetUrl())
 	}
 
 	req = <-reqs
-	exp.SetId(2)
-	exp.SetWebsite("test-example-1")
-	exp.SetUrl("example1-2")
-
-	if !reflect.DeepEqual(exp, req) {
-		t.Error("Expected: ", exp, " got: ", req)
+	if req.Id != 2 {
+		t.Errorf("Expected 2 got %v\n", req.Id)
+	}
+	if req.GetWebsite() != "test-example-1" {
+		t.Errorf("Expected test-example-1 got %v\n", req.GetWebsite())
+	}
+	if req.GetUrl() != "example1-2" {
+		t.Errorf("Expected example1-2 got %v\n", req.GetUrl())
 	}
 
 	select {

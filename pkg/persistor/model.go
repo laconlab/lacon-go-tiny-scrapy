@@ -1,5 +1,9 @@
 package persistor
 
+type Data interface {
+	GetRawWebsiteAsJSON() []byte
+}
+
 type PersistorConfig struct {
 	Config struct {
 		Path        string `yaml:"savePath"`

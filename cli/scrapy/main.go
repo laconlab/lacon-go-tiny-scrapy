@@ -38,7 +38,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	httpReqs := selector.NewHttpReqChan(websites)
+	emptyReqs := result.NewFullWebsiteResultChan()
+
+	httpReqs := selector.NewHttpReqChan(websites, emptyReqs)
 
 	httpPages := crawler.NewCrawler(httpReqs, agents, crawlerCfg)
 
@@ -51,5 +53,5 @@ func main() {
 		}
 	}(httpPages, rawPages)
 
-	persistor.NewStore(persistorCfg, rawPages)
+	persistor.NewStore(persistorCfg, httpPages)
 }

@@ -6,29 +6,27 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
-func NewCrawler(
-	reqs chan *result.FullWebsiteResult,
-	agents *HttpAgents,
-	cfg *CrawlerConfig) chan *result.FullWebsiteResult {
+func NewCrawler[T CrawlerResult](reqs chan T, agents *HttpAgents, cfg *CrawlerConfig) chan T {
 
 	wg := sync.WaitGroup{}
-	out := make(chan *result.FullWebsiteResult, cfg.getBufferSize())
+	out := make(chan T, cfg.getBufferSize())
 
 	for i := 0; i < cfg.getWorkerPoolSize(); i++ {
-		worker := &crawlerWorker{
+		worker := &crawlerWorker[T]{
 			agents:  agents,
 			timeout: cfg.getTimeout(),
+			wg:      &wg,
+			in:      reqs,
+			out:     out,
 		}
 
 		wg.Add(1)
-		go worker.start(&wg, reqs, out)
+		go worker.start()
 	}
 
-	go func(wg *sync.WaitGroup, out chan *result.FullWebsiteResult) {
+	go func(wg *sync.WaitGroup, out chan T) {
 		wg.Wait()
 		close(out)
 		log.Println("Stopping all crawler workers")
@@ -37,21 +35,17 @@ func NewCrawler(
 	return out
 }
 
-func (w *crawlerWorker) start(
-	wg *sync.WaitGroup,
-	input chan *result.FullWebsiteResult,
-	out chan *result.FullWebsiteResult) {
-
+func (w *crawlerWorker[T]) start() {
 	log.Println("Starting new crawler worker")
-	defer wg.Done()
+	defer w.wg.Done()
 
-	for wlog := range input {
+	for wlog := range w.in {
 		for {
 			if cnt, retry := w.download(wlog.GetUrl()); cnt != nil {
 				wlog.SetRawContent(cnt)
 				ts := time.Now()
 				wlog.SetDownloadDate(ts.Format("YYYYMMDD"))
-				out <- wlog
+				w.out <- wlog
 				break
 			} else if !retry {
 				break
@@ -61,7 +55,7 @@ func (w *crawlerWorker) start(
 }
 
 // return contnet and if request should be retried
-func (w *crawlerWorker) download(url string) ([]byte, bool) {
+func (w *crawlerWorker[T]) download(url string) ([]byte, bool) {
 	agent := w.agents.next()
 
 	if !headerFilter(url, agent, w.timeout) {

@@ -8,13 +8,13 @@ import (
 	"sync"
 )
 
-func NewStore(cfg *PersistorConfig, items <-chan []byte) {
+func NewStore[T Data](cfg *PersistorConfig, items <-chan T) {
 	wg := &sync.WaitGroup{}
 	id := 0
 	fullPathPattern := cfg.getPath() + cfg.getNamePattern() + ".gz"
 	for item := range items {
 		wg.Add(1)
-		go store(wg, item, fmt.Sprintf(fullPathPattern, id))
+		go store(wg, item.GetRawWebsiteAsJSON(), fmt.Sprintf(fullPathPattern, id))
 		id++
 	}
 

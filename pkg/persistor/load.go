@@ -27,7 +27,7 @@ func NewLoader(cfg *PersistorConfig) chan *result.FullWebsiteResult {
 
 	go func(wg *sync.WaitGroup, out chan *result.FullWebsiteResult) {
 		wg.Wait()
-		close(output)
+		close(out)
 		log.Println("Loading completed, channel closed")
 	}(&wg, output)
 

@@ -10,19 +10,6 @@ import (
 	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
-type tmp struct {
-	url     string
-	content []byte
-}
-
-func (t *tmp) GetUrl() string {
-	return t.url
-}
-
-func (t *tmp) SetRawContent(cnt []byte) {
-	t.content = cnt
-}
-
 func Test200Download(t *testing.T) {
 	cfg := &CrawlerConfig{}
 	cfg.Config.Timeout = time.Second
@@ -35,14 +22,21 @@ func Test200Download(t *testing.T) {
 
 	expected := "test response"
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, expected)
+		fmt.Fprint(w, expected)
 	}))
 	defer ts.Close()
 
 	logs := make(chan *result.FullWebsiteResult, 1)
-	logs <- &result.FullWebsiteResult{Url: ts.URL}
+	logs <- &result.FullWebsiteResult{
+		Id:            0,
+		Website:       "",
+		Url:           ts.URL,
+		DownloadDate:  "",
+		RawContent:    []byte{},
+		ParsedContent: map[string]string{},
+	}
 	close(logs)
 	crw := NewCrawler(logs, agents, cfg)
 
@@ -67,9 +61,9 @@ func Test400Download(t *testing.T) {
 
 	notExpected := "test response"
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, notExpected)
+		fmt.Fprint(w, notExpected)
 	}))
 	defer ts.Close()
 
@@ -97,7 +91,7 @@ func TestErrorOnFilter(t *testing.T) {
 	expected := "test response"
 
 	callCount := 0
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if callCount == 0 {
 			w.WriteHeader(http.StatusInternalServerError)
 			callCount++
@@ -106,7 +100,7 @@ func TestErrorOnFilter(t *testing.T) {
 		callCount++
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, expected)
+		fmt.Fprint(w, expected)
 	}))
 	defer ts.Close()
 
@@ -140,7 +134,7 @@ func TestRetry(t *testing.T) {
 	expected := "test response"
 
 	callCount := 0
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if callCount < 3 {
 			w.WriteHeader(http.StatusInternalServerError)
 			callCount++
@@ -149,7 +143,7 @@ func TestRetry(t *testing.T) {
 
 		callCount++
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, expected)
+		fmt.Fprint(w, expected)
 	}))
 	defer ts.Close()
 

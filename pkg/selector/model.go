@@ -2,6 +2,12 @@ package selector
 
 import "fmt"
 
+type WebsiteReqest interface {
+	SetId(id int)
+	SetWebsite(name string)
+	SetUrl(url string)
+}
+
 type Websites struct {
 	Sites []*Website `yaml:"websites"`
 }

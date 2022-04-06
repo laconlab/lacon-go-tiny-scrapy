@@ -2,36 +2,42 @@ package selector
 
 import (
 	"log"
-
-	"github.com/laconlab/lacon-go-tiny-scrapy/pkg/result"
 )
 
-func NewHttpReqChan(websites *Websites) chan *result.FullWebsiteResult {
-	out := make(chan *result.FullWebsiteResult, 10)
+func NewHttpReqChan[T WebsiteReqest](websites *Websites, emptyReqests chan T) chan T {
+	out := make(chan T, 10)
 
-	go func(ch chan *result.FullWebsiteResult, sites []*Website) {
-		defer close(ch)
+	go func(in, out chan T, sites []*Website) {
+		defer close(out)
 
-		done := 0
-		for done < len(sites) {
-			done = 0
-			for _, site := range sites {
-				if site.isDone() {
-					done++
-					continue
+		idx := 0
+		for req := range in {
+
+			var site *Website
+			for i := 0; i < len(sites); i++ {
+				if !sites[idx].isDone() {
+					site = sites[idx]
 				}
+				idx = (idx + 1) % len(sites)
 
-				req := &result.FullWebsiteResult{}
-				req.SetId(site.Id)
-				req.SetWebsite(site.Name)
-				req.SetUrl(site.getUrl())
-				site.inc()
-				ch <- req
-
+				if site != nil {
+					break
+				}
 			}
+
+			if site == nil {
+				break
+			}
+
+			req.SetId(site.Id)
+			req.SetWebsite(site.Name)
+			req.SetUrl(site.getUrl())
+			site.inc()
+			out <- req
+
 		}
 		log.Println("all requests are created, closing channel")
-	}(out, websites.Sites)
+	}(emptyReqests, out, websites.Sites)
 
 	return out
 }

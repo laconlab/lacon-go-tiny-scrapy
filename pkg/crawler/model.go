@@ -1,12 +1,22 @@
 package crawler
 
 import (
+	"sync"
 	"time"
 )
 
-type crawlerWorker struct {
+type CrawlerResult interface {
+	GetUrl() string
+	SetRawContent([]byte)
+	SetDownloadDate(string)
+}
+
+type crawlerWorker[T CrawlerResult] struct {
 	agents  *HttpAgents
 	timeout time.Duration
+	wg      *sync.WaitGroup
+	in      chan T
+	out     chan T
 }
 
 type CrawlerConfig struct {

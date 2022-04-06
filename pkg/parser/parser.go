@@ -39,7 +39,7 @@ func extract(cnt []byte, rule *Rule) (string, bool) {
 
 	var result string
 	var found bool
-	html.Find(rule.Tag).Each(func(i int, sec *goquery.Selection) {
+	html.Find(rule.Tag).Each(func(_ int, sec *goquery.Selection) {
 		if res, ok := findInSection(sec, rule); ok {
 			result = res
 			found = true
@@ -68,7 +68,7 @@ func findInSection(selection *goquery.Selection, rule *Rule) (string, bool) {
 
 func filterSelection(selection *goquery.Selection, tags []string) {
 	for _, tag := range tags {
-		selection.Find(tag).Each(func(i int, sec *goquery.Selection) {
+		selection.Find(tag).Each(func(_ int, sec *goquery.Selection) {
 			sec.Remove()
 		})
 	}
