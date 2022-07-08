@@ -14,7 +14,7 @@ websites:
       urlTemplate: "https://www.index.hr/clanak.aspx?id=%d"
       startIndex: 2270710
       endIndex: 2270715
-      componets:
+      rules:
           - componet: "title"
             tag: "h1"
             attribute: "class"
@@ -29,6 +29,34 @@ websites:
             attribute: "class"
             value: "text vijesti-link-underline"
             filters: ["div", "br", "script", "style", "i", "a", "img",
+            "noscript", "font", "b", "strong", "blockquote",
+            "iframe", "span", "em", "video"]
+    - name: "hotspot"
+      urlTemplate: ""
+      startIndex: 2270710
+      endIndex: 2270715
+      rules:
+          - component: "title"
+            tag: "meta"
+            attribute-name: "property"
+            attribute-id: "og:title"
+            extract: "content"
+          - component: "url"
+            tag: "meta"
+            attribute-name: "property"
+            attribute-id: "og:url"
+            extract: "content"
+          - component: "publish_date"
+            tag: "meta"
+            attribute-name: "property"
+            attribute-id: "article:published_time"
+            extract: "content"
+          - component: "text"
+            tag: "article"
+            # attribute-name: "property"
+            # attribute-id: "article:published_time"
+            # extract: "content"
+            filters: ["br", "header", "script", "style", "i", "a", "img",
             "noscript", "font", "b", "strong", "blockquote",
             "iframe", "span", "em", "video"]
 

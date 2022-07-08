@@ -37,22 +37,25 @@ func extract(cnt []byte, rule *Rule) (string, bool) {
 		return "", false
 	}
 
-	var result string
+	var result []string
 	var found bool
 	html.Find(rule.Tag).Each(func(_ int, sec *goquery.Selection) {
 		if res, ok := findInSection(sec, rule); ok {
-			result = res
+			result = append(result, strings.TrimSpace(res))
 			found = true
 			return
 		}
 	})
 
-	return strings.TrimSpace(result), found
+	return strings.Join(result, "\n"), found
 }
 
 func findInSection(selection *goquery.Selection, rule *Rule) (string, bool) {
 	var res string
 	val, found := selection.Attr(rule.AttrName)
+	if rule.AttrName == "" {
+		found = true
+	}
 
 	if found && val == rule.AttrId && rule.Extract != "" {
 		res, found = selection.Attr(rule.Extract)
