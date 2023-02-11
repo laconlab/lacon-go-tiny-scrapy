@@ -56,7 +56,7 @@ func (w *crawlerWorker[T]) start() {
 
 // return contnet and if request should be retried
 func (w *crawlerWorker[T]) download(url string) ([]byte, bool) {
-	agent := w.agents.next()
+	agent := w.agents.Next()
 
 	if !headerFilter(url, agent, w.timeout) {
 		log.Printf("Url %s filtered out\n", url)

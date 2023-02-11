@@ -1,11 +1,20 @@
 package selector
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 type WebsiteReqest interface {
 	SetId(id int)
 	SetWebsite(name string)
 	SetUrl(url string)
+}
+
+type SiteRequest struct {
+	Id   int
+	Name string
+	Url  string
 }
 
 type Websites struct {
@@ -17,16 +26,27 @@ type Website struct {
 	UrlTemplate string `yaml:"urlTemplate"`
 	Id          int    `yaml:"startIndex"`
 	EndId       int    `yaml:"endIndex"`
+	realStart   int
 }
 
-func (w *Website) getUrl() string {
-	return fmt.Sprintf(w.UrlTemplate, w.Id)
-}
+func (w *Website) Next() *SiteRequest {
+	if w.realStart == 0 {
+		w.realStart = w.Id
+	}
+	if w.Id >= w.EndId {
+		log.Printf("done with %s\n", w.Name)
+		return nil
+	}
 
-func (w *Website) isDone() bool {
-	return w.Id > w.EndId
-}
-
-func (w *Website) inc() {
+	req := &SiteRequest{
+		Id:   w.Id,
+		Name: w.Name,
+		Url:  fmt.Sprintf(w.UrlTemplate, w.Id),
+	}
 	w.Id++
+	if w.Id%1_000 == 0 {
+		p := float64(w.Id-w.realStart) / float64(w.EndId-w.realStart)
+		log.Printf("%s progress %.3f\n", w.Name, p)
+	}
+	return req
 }

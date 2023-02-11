@@ -10,55 +10,11 @@ persistor:
 
 
 websites:
-    - name: "indexhr"
-      urlTemplate: "https://www.index.hr/clanak.aspx?id=%d"
-      startIndex: 2270710
-      endIndex: 2270715
-      rules:
-          - componet: "title"
-            tag: "h1"
-            attribute: "class"
-            value: "vijesti-text-parsed title"
-          - componet: "url"
-            tag: "link"
-            attribute: "rel"
-            value: "og:url"
-            extract: "href"
-          - componet: "article"
-            tag: "div"
-            attribute: "class"
-            value: "text vijesti-link-underline"
-            filters: ["div", "br", "script", "style", "i", "a", "img",
-            "noscript", "font", "b", "strong", "blockquote",
-            "iframe", "span", "em", "video"]
-    - name: "hotspot"
-      urlTemplate: ""
-      startIndex: 2270710
-      endIndex: 2270715
-      rules:
-          - component: "title"
-            tag: "meta"
-            attribute-name: "property"
-            attribute-id: "og:title"
-            extract: "content"
-          - component: "url"
-            tag: "meta"
-            attribute-name: "property"
-            attribute-id: "og:url"
-            extract: "content"
-          - component: "publish_date"
-            tag: "meta"
-            attribute-name: "property"
-            attribute-id: "article:published_time"
-            extract: "content"
-          - component: "text"
-            tag: "article"
-            # attribute-name: "property"
-            # attribute-id: "article:published_time"
-            # extract: "content"
-            filters: ["br", "header", "script", "style", "i", "a", "img",
-            "noscript", "font", "b", "strong", "blockquote",
-            "iframe", "span", "em", "video"]
+    - name: "vecernji"
+      urlTemplate: "https://www.vecernji.hr/lifestyle/zao-nam-je-ali-polovica-vasih-prijatelja-vas-uopce-ne-voli-%d"
+      startIndex: 1357754
+      endIndex: 1367754 # 1656388
+
 
 userAgents:
     - "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"

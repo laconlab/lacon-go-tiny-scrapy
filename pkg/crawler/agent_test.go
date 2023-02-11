@@ -19,22 +19,22 @@ func TestRoundRobinAgents(t *testing.T) {
 		t.Error(err)
 	}
 
-	agent := agents.next()
+	agent := agents.Next()
 	if agent != "Agent-2" {
 		t.Error("Expected: Agent-2 got: ", agent)
 	}
 
-	agent = agents.next()
+	agent = agents.Next()
 	if agent != "Agent-3" {
 		t.Error("Expected: Agent-3 got: ", agent)
 	}
 
-	agent = agents.next()
+	agent = agents.Next()
 	if agent != "Agent-1" {
 		t.Error("Expected: Agent-1 got: ", agent)
 	}
 
-	agent = agents.next()
+	agent = agents.Next()
 	if agent != "Agent-2" {
 		t.Error("Expected: Agent-2 got: ", agent)
 	}

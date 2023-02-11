@@ -6,7 +6,7 @@ type HttpAgents struct {
 	id     int
 }
 
-func (a *HttpAgents) next() string {
+func (a *HttpAgents) Next() string {
 	if len(a.Agents) == 0 {
 		return ""
 	}

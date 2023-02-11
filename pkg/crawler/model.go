@@ -11,6 +11,14 @@ type CrawlerResult interface {
 	SetDownloadDate(string)
 }
 
+type SiteResponse struct {
+	Id           int    `json:"id"`
+	Name         string `json:"site"`
+	Cnt          string `json:"content"`
+	Url          string `json:"url"`
+	DownloadDate string `json:"download_date"`
+}
+
 type crawlerWorker[T CrawlerResult] struct {
 	agents  *HttpAgents
 	timeout time.Duration
