@@ -1,7 +1,7 @@
 crawler:
     timeout: 10s
     bufferSize: 10000
-    workerPoolSize: 1
+    workerPoolSize: 5
 
 persistor:
     savePath: "data/"
@@ -12,8 +12,8 @@ persistor:
 websites:
     - name: "vecernji"
       urlTemplate: "https://www.vecernji.hr/lifestyle/zao-nam-je-ali-polovica-vasih-prijatelja-vas-uopce-ne-voli-%d"
-      startIndex: 1357754
-      endIndex: 1367754 # 1656388
+      startIndex: 1367754
+      endIndex: 1656388
 
 
 userAgents:
