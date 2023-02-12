@@ -133,7 +133,7 @@ func downloadWithRetry(req *SiteRequest, stats *DownloadStats) *SiteResponse {
 }
 
 func download(req *SiteRequest, stats *DownloadStats) ([]byte, bool) {
-
+	start := time.Now()
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -153,7 +153,7 @@ func download(req *SiteRequest, stats *DownloadStats) ([]byte, bool) {
 	}
 	defer resp.Body.Close()
 
-	stats.Record(req.Name, resp.StatusCode)
+	stats.Record(req.Name, resp.StatusCode, time.Since(start).Milliseconds())
 
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 		if resp.StatusCode != 404 {

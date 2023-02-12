@@ -28,14 +28,18 @@ func (s *StatusCodeStats) String() string {
 }
 
 type DownloadStats struct {
-	ResponseCodesBySite map[string]*StatusCodeStats
-	lock                *sync.Mutex
+	ResponseCodesBySite           map[string]*StatusCodeStats
+	TotalTimeTakenPerSite         map[string]uint64
+	TotalNumberOfRequestsPreStire map[string]uint64
+	lock                          *sync.Mutex
 }
 
 func NewStats() *DownloadStats {
 	return &DownloadStats{
-		ResponseCodesBySite: make(map[string]*StatusCodeStats),
-		lock:                &sync.Mutex{},
+		ResponseCodesBySite:           make(map[string]*StatusCodeStats),
+		TotalTimeTakenPerSite:         make(map[string]uint64),
+		TotalNumberOfRequestsPreStire: make(map[string]uint64),
+		lock:                          &sync.Mutex{},
 	}
 }
 
@@ -44,12 +48,13 @@ func (s *DownloadStats) String() string {
 	defer s.lock.Unlock()
 	out := make([]string, 0)
 	for site, stats := range s.ResponseCodesBySite {
-		out = append(out, fmt.Sprintf("%s\t%s", site, stats.String()))
+		rt := float64(s.TotalTimeTakenPerSite[site]) / float64(s.TotalNumberOfRequestsPreStire[site])
+		out = append(out, fmt.Sprintf("%s\t%s avg %.3fms", site, stats.String(), rt))
 	}
 	return strings.Join(out, "\n")
 }
 
-func (s *DownloadStats) Record(name string, code int) {
+func (s *DownloadStats) Record(name string, code int, timeTakenMs int64) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	stats, ok := s.ResponseCodesBySite[name]
@@ -58,4 +63,7 @@ func (s *DownloadStats) Record(name string, code int) {
 	}
 	stats.Record(code)
 	s.ResponseCodesBySite[name] = stats
+
+	s.TotalTimeTakenPerSite[name] += uint64(timeTakenMs)
+	s.TotalNumberOfRequestsPreStire[name]++
 }
