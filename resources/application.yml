@@ -1,19 +1,55 @@
 crawler:
     timeout: 10s
     bufferSize: 10000
-    workerPoolSize: 5
+    workerPoolSize: 10
 
 persistor:
     savePath: "data/"
     namePattern: "html_%d"
     bufferSize: 10000
 
-
 websites:
-    - name: "vecernji"
-      urlTemplate: "https://www.vecernji.hr/lifestyle/zao-nam-je-ali-polovica-vasih-prijatelja-vas-uopce-ne-voli-%d"
-      startIndex: 1367754
-      endIndex: 1656388
+   #- name: "hrt"
+   #  urlTemplate: "https://vijesti.hrt.hr/%d/u-primostenu-staru-godinu-ispratili-bukom"
+   #  startIndex: 750430
+   #  endIndex: 750430
+   #- name: "vecernji"
+   #  urlTemplate: "https://www.vecernji.hr/lifestyle/zao-nam-je-ali-polovica-vasih-prijatelja-vas-uopce-ne-voli-%d"
+   #  startIndex: 1713007
+   #  endIndex: 1713007
+   #- name: "novilist"
+   #  urlTemplate: "https://www.novilist.hr/?p=%d"
+   #  startIndex: 1068318
+   #  endIndex: 1068318
+   #- name: "24sata"
+   #  urlTemplate: "https://www.24sata.hr/news/v-%d"
+   #  startIndex: 943797
+   #  endIndex:   943797
+   #- name: "direktno"
+   #  urlTemplate: "https://direktno.hr/zivot/zdravlje/lj-%d/"
+   #  startIndex: 330093
+   #  endIndex:   330093
+
+   #- name: "telegram"
+   #   urlTemplate: "https://www.telegram.hr/zivot/%d"
+   #   startIndex: 887900
+   #   endIndex:  1865720
+    - name: "jutarnji"
+      urlTemplate: "https://www.jutarnji.hr/vijesti/hrvatska/v-%d"
+      startIndex: 8489100
+      endIndex:  15389995
+    - name: "dnevno"
+      urlTemplate: "https://www.dnevno.hr/?p=%d"
+      startIndex: 1432000
+      endIndex:   2255158
+    #- name: "slobodnadalmacija"
+    #  urlTemplate: "https://slobodnadalmacija.hr/kolumne/v-%d"
+    #  startIndex: 592000
+    #  endIndex:  1335342
+  #- name: "indexhr"
+  #  urlTemplate: "https://www.index.hr/vijesti/clanak/i/%d.aspx"
+  #  startIndex: 2060043
+  #  endIndex:   2508986
 
 
 userAgents:

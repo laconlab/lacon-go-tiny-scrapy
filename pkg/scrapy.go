@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,8 +16,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var logger *log.Logger
+var logFile *os.File
+
 func RunScrapy(cfgPath string) error {
-	cfg, err := ioutil.ReadFile(cfgPath)
+	cfg, err := os.ReadFile(cfgPath)
 	if err != nil {
 		return err
 	}
@@ -42,6 +45,9 @@ func RunScrapy(cfgPath string) error {
 		return err
 	}
 
+    initLogger("logs/info.log")
+    defer closeLogger()
+
 	siteReqs := make(chan *SiteRequest)
 	go provideSiteRequests(websites, agents, siteReqs)
 
@@ -64,10 +70,10 @@ func RunScrapy(cfgPath string) error {
 
 	// wait to download all and close channel
 	go func() {
-		log.Println("wait")
+		logger.Println("wait")
 		downWg.Wait()
 		close(siteResps)
-		log.Println("done")
+		logger.Println("done")
 	}()
 
 	// store
@@ -80,6 +86,23 @@ func RunScrapy(cfgPath string) error {
 	storeWg.Wait()
 
 	return nil
+}
+
+func initLogger(filename string) error {
+    var err error
+    logFile, err = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+    if err != nil {
+        return fmt.Errorf("cannot init logger %s", err)
+    }
+
+    logger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+    return nil
+}
+
+func closeLogger() {
+    if logFile != nil {
+        logFile.Close()
+    }
 }
 
 // round robin around websites and create request for each
@@ -122,7 +145,7 @@ func downloadWithRetry(req *SiteRequest, stats *DownloadStats) *SiteResponse {
 				Name:         req.Name,
 				Cnt:          string(cnt),
 				Url:          req.Url,
-				DownloadDate: time.Now().GoString(),
+				DownloadDate: time.Now().Unix(),
 			}
 		} else if done {
 			return nil
@@ -140,15 +163,17 @@ func download(req *SiteRequest, stats *DownloadStats) ([]byte, bool) {
 
 	httpReq, err := http.NewRequest(http.MethodGet, req.Url, nil)
 	if err != nil {
-		log.Println("Error while creating new http request", err)
+		logger.Println("Error while creating new http request", err)
 		return nil, false
 	}
 
 	httpReq.Header.Set("User-Agent", req.Agent)
+	httpReq.Header.Set("Content-Encoding", "gzip")
+	httpReq.Header.Set("content-type", "text/html")
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		log.Println("Error while getting http response", err)
+		logger.Println("Error while getting http response", err)
 		return nil, false
 	}
 	defer resp.Body.Close()
@@ -156,20 +181,19 @@ func download(req *SiteRequest, stats *DownloadStats) ([]byte, bool) {
 	stats.Record(req.Name, resp.StatusCode, time.Since(start).Milliseconds())
 
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-		if resp.StatusCode != 404 {
-			log.Printf("Status code %d at id %d webiste %s\n", resp.StatusCode, req.Id, req.Name)
-		}
+		logger.Printf("Status code %d at id %d webiste %s\n", resp.StatusCode, req.Id, req.Name)
 		return nil, true
 	}
 
 	if resp.StatusCode >= 500 {
+		logger.Printf("Status code %d website %s id %d\n", resp.StatusCode, req.Name, req.Id)
 		log.Printf("Status code %d website %s id %d\n", resp.StatusCode, req.Name, req.Id)
-		return nil, false
+		return nil, true//false
 	}
 
-	cnt, err := ioutil.ReadAll(resp.Body)
+	cnt, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Recived error while reanind a website %s id %d %s\n", req.Name, req.Id, err)
+		logger.Printf("Recived error while readall a website %s id %d %s\n", req.Name, req.Id, err)
 		return nil, false
 	}
 
@@ -181,14 +205,14 @@ func saveResponse(wg *sync.WaitGroup, root string, resp *SiteResponse) {
 
 	cnt, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf("error: %s %d %s\n", resp.Name, resp.Id, err)
+		logger.Printf("error: %s %d %s\n", resp.Name, resp.Id, err)
 		return
 	}
 
 	path := path.Join(root, resp.Name, fmt.Sprintf("%d.gz", resp.Id))
 	f, err := create(path)
 	if err != nil {
-		log.Printf("error: %s %d %s\n", resp.Name, resp.Id, err)
+		logger.Printf("error: %s %d %s\n", resp.Name, resp.Id, err)
 		return
 	}
 	defer f.Close()

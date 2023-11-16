@@ -13,7 +13,7 @@ func init() {
 		Use:   "scrapy",
 		Short: "downloads websites according to provided yml config",
 		Long:  "downloads websites according to provided yml config",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfgPath, err := cmd.Flags().GetString("config-path")
 			if err != nil {
 				fmt.Println(err)

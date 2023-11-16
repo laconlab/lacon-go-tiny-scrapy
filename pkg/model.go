@@ -51,7 +51,7 @@ type SiteResponse struct {
 	Name         string `json:"site"`
 	Cnt          string `json:"content"`
 	Url          string `json:"url"`
-	DownloadDate string `json:"download_date"`
+	DownloadDate int64 `json:"download_date"`
 }
 
 type CrawlerConfig struct {

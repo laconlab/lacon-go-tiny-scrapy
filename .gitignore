@@ -1,6 +1,7 @@
 .idea/
 output/
 data/
+backup/
 *.log
 
 # Binaries for programs and plugins
@@ -21,3 +22,4 @@ vendor/
 
 lacon-go-tiny-scrapy
 main
+logs
